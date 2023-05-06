@@ -1,0 +1,28 @@
+{
+	"networking": {
+		"bind_address": "0.0.0.0",
+		"udp_request_threshold": 20,
+		"tcp_socket_backlog": 50,
+		"enable_discovery": true
+	},
+	"routes": [
+		{
+			"name": "default_subnet_route",
+			"cidr": "192.168.1.0/24"
+		}
+	],
+	"commands": [
+		{
+			"name": "alterdata_pack",
+			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|Ethernet|ipv4|0}\"}",
+			"routes": ["default_subnet_route"],
+			"cached_once": false
+		},
+		{
+			"name": "alterdata_shop",
+			"response": "{\"database\": \"ALTERDATA_SHOP\", \"address\": \"${getAddressOf|Ethernet|ipv4|0}\"}",
+			"routes": ["default_subnet_route"],
+			"cached_once": false
+		}
+	]
+}
