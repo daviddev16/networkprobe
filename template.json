@@ -1,6 +1,7 @@
 {
 	"networking": {
-		"bind_address": "0.0.0.0",
+		"tcp_bind_address": "0.0.0.0",
+		"udp_broadcast_address": "255.255.255.255",
 		"udp_request_threshold": 20,
 		"tcp_socket_backlog": 50,
 		"enable_discovery": true
@@ -14,13 +15,13 @@
 	"commands": [
 		{
 			"name": "alterdata_pack",
-			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|Ethernet|ipv4|0}\"}",
+			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\"}",
 			"routes": ["default_subnet_route"],
 			"cached_once": false
 		},
 		{
 			"name": "alterdata_shop",
-			"response": "{\"database\": \"ALTERDATA_SHOP\", \"address\": \"${getAddressOf|Ethernet|ipv4|0}\"}",
+			"response": "{\"database\": \"ALTERDATA_SHOP\", \"address\": \"${getAddressOf|eth6|ipv4|0}\"}",
 			"routes": ["default_subnet_route"],
 			"cached_once": false
 		}

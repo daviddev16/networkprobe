@@ -1,4 +1,4 @@
-package com.networkprobe.core.lexer;
+package com.networkprobe.core.command.lexer;
 
 public class SimplexerException extends RuntimeException {
 

@@ -4,13 +4,16 @@ import static com.networkprobe.core.util.Validator.*;
 
 public class Networking implements Cloneable {
 
-    private String bindAddress;
+    private String tcpBindAddress;
+    private String udpBroadcastAddress;
     private int udpRequestThreshold;
     private int tcpSocketBacklog;
     private boolean enableDiscovery;
 
-    private Networking(String bindAddress, int udpRequestThreshold, int tcpSocketBacklog, boolean enableDiscovery) {
-        this.bindAddress = bindAddress;
+    private Networking(String tcpBindAddress, String udpBroadcastAddress, int udpRequestThreshold,
+                       int tcpSocketBacklog, boolean enableDiscovery) {
+        this.tcpBindAddress = tcpBindAddress;
+        this.udpBroadcastAddress = udpBroadcastAddress;
         this.udpRequestThreshold = udpRequestThreshold;
         this.tcpSocketBacklog = tcpSocketBacklog;
         this.enableDiscovery = enableDiscovery;
@@ -18,12 +21,20 @@ public class Networking implements Cloneable {
 
     private Networking() {}
 
-    public String getBindAddress() {
-        return bindAddress;
+    public String getTcpBindAddress() {
+        return tcpBindAddress;
     }
 
-    private void setBindAddress(String bindAddress) {
-        this.bindAddress = bindAddress;
+    private void setTcpBindAddress(String tcpBindAddress) {
+        this.tcpBindAddress = tcpBindAddress;
+    }
+
+    public String getUdpBroadcastAddress() {
+        return udpBroadcastAddress;
+    }
+
+    public void setUdpBroadcastAddress(String udpBroadcastAddress) {
+        this.udpBroadcastAddress = udpBroadcastAddress;
     }
 
     public int getUdpRequestThreshold() {
@@ -54,9 +65,15 @@ public class Networking implements Cloneable {
 
         private final Networking networking = new Networking();
 
-        public Builder bindAddress(String bindAddress) {
-            checkIsAValidIpv4(bindAddress, "bindAddress");
-            networking.setBindAddress(bindAddress);
+        public Builder tcpBindAddress(String tcpBindAddress) {
+            checkIsAValidIpv4(tcpBindAddress, "tcpBindAddress");
+            networking.setTcpBindAddress(tcpBindAddress);
+            return this;
+        }
+
+        public Builder udpBroadcastAddress(String udpBroadcastAddress) {
+            checkIsAValidIpv4(udpBroadcastAddress, "udpBroadcastAddress");
+            networking.setUdpBroadcastAddress(udpBroadcastAddress);
             return this;
         }
 

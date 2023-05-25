@@ -6,5 +6,5 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Addressable { }
+@Target(ElementType.METHOD)
+public @interface Hide { }

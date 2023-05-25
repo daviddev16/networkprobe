@@ -1,5 +1,7 @@
 package com.networkprobe.core.command.caching;
 
+import com.networkprobe.core.api.ResponseEntity;
+
 public abstract class DefaultResponseEntity<T> implements ResponseEntity<T> {
 
     private final String rawContent;

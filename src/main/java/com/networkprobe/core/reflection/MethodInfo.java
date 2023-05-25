@@ -11,10 +11,6 @@ public final class MethodInfo {
         this.method = method;
     }
 
-    public boolean matches(List<Object> arguments) {
-        return false;
-    }
-
     public Method getMethod() {
         return method;
     }

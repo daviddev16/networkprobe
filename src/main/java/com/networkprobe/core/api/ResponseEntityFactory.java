@@ -1,6 +1,4 @@
-package com.networkprobe.core.factory;
-
-import com.networkprobe.core.command.caching.ResponseEntity;
+package com.networkprobe.core.api;
 
 public interface ResponseEntityFactory {
 

@@ -18,4 +18,9 @@ public class CachedValue {
         return timestamp;
     }
 
+    public static CachedValue createInstant(String value) {
+        final long timestamp = System.currentTimeMillis();
+        return new CachedValue(value, timestamp);
+    }
+
 }

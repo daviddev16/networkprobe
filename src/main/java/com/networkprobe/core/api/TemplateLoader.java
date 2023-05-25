@@ -1,9 +1,8 @@
-package com.networkprobe.core.config;
+package com.networkprobe.core.api;
 
 import com.networkprobe.core.config.model.Command;
 import com.networkprobe.core.config.model.Networking;
 import com.networkprobe.core.config.model.Route;
-import com.networkprobe.core.factory.ResponseEntityFactory;
 
 import java.io.File;
 

@@ -1,6 +1,4 @@
-package com.networkprobe.core.lexer;
-
-
+package com.networkprobe.core.command.lexer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +35,7 @@ public class Simplexer {
                 processEndCharacter();
             } else if (checkValue(currentPos, CHR_SEPARATOR)) {
                 processSeparator();
-            } else {
+            } else if (skipEqualsTo(CHR_DOLLAR, CHR_START, CHR_END)){
                 processLetter();
             }
             currentPos++;

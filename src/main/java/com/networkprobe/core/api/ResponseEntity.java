@@ -1,4 +1,4 @@
-package com.networkprobe.core.command.caching;
+package com.networkprobe.core.api;
 
 public interface ResponseEntity<T> {
 

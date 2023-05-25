@@ -3,7 +3,7 @@ package com.networkprobe.core.command.caching;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/* timing based cache system */
+/* time based cache system */
 public abstract class CachedResponseEntity extends DefaultResponseEntity<String> {
 
     public static final long CACHE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);

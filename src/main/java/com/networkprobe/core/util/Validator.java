@@ -17,13 +17,6 @@ public class Validator {
     public static final String CIDR_NOTATION_PATTERN =
             "^((?:\\d{1,2}|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:\\d{1,2}|1\\d{2}|2[0-4]\\d|25[0-5])(?:/(?:[1-9]|[1-2]\\d|3[0-2]))$";
 
-    public static JSONObject checkJsonFunction(JSONObject jsonObject) {
-        checkIsNotNull(jsonObject, "jsonObject");
-        checkIsNotNull(jsonObject.getString(Keys.NAME), "jsonObject#{name}");
-        checkIsNotNull(jsonObject.getString(Keys.ARGS), "jsonObject#{args}");
-        return jsonObject;
-    }
-
     public static String checkIsAValidIpv4(String address, String name) {
         if (!Pattern.matches(IPV4_REGEX_PATTERN, checkIsNullOrEmpty(address, name)))
             throw new InvalidPropertyException( format("\"%s\" não é um endereço Ipv4 válido.", address) );
