@@ -1,7 +1,7 @@
 {
 	"networking": {
 		"tcp_bind_address": "0.0.0.0",
-		"udp_broadcast_address": "255.255.255.255",
+		"udp_broadcast_address": "0.0.0.0",
 		"udp_request_threshold": 20,
 		"tcp_socket_backlog": 50,
 		"enable_discovery": true

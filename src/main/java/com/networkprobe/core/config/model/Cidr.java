@@ -1,7 +1,7 @@
 package com.networkprobe.core.config.model;
 
 
-import com.networkprobe.core.util.Utility;
+import com.networkprobe.core.util.NetworkUtil;
 
 public class Cidr {
 
@@ -25,7 +25,7 @@ public class Cidr {
     }
 
     public int getSubnetPrefix() {
-        return Utility.convertMaskToPrefix(subnetMask);
+        return NetworkUtil.convertMaskToPrefix(subnetMask);
     }
 
     @Override

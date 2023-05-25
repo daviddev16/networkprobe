@@ -3,7 +3,12 @@ package com.networkprobe.core.command.caching;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/* time based cache system */
+/**
+ * Proxy de caching de processamento do ResponseEntity baseado em tempo,
+ * não necessita de complexidade extra para caching de dados que não vão
+ * mudar com frequência, como por exemplo um IPv4 endereçado por um servidor
+ * DHCP ou nome do banco de dados que não irá mudar.
+ * */
 public abstract class CachedResponseEntity extends DefaultResponseEntity<String> {
 
     public static final long CACHE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);

@@ -1,0 +1,114 @@
+package com.networkprobe.core.util;
+
+import com.networkprobe.core.config.model.Cidr;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static com.networkprobe.core.util.Validator.checkIsNotNull;
+
+public class NetworkUtil {
+
+	public static final int MIN_BUFFER_SIZE = 16;
+	public static final String ALL_INTERFACES_BROADCAST_ADDRESS = "255.255.255.255";
+
+	public static NetworkInterface getNetworkInterfaceByAddress(String addressString)
+			throws InvalidPropertiesFormatException, UnknownHostException, SocketException {
+		Validator.checkIsAValidIpv4(addressString, "addressString");
+		InetAddress address = InetAddress.getByName(addressString);
+		return NetworkInterface.getByInetAddress(address);
+	}
+
+	public static Set<String> getBroadcastAddresses(NetworkInterface networkInterface) {
+		Validator.checkIsNotNull(networkInterface, "networkInterface");
+		Set<String> broadcastAddresses = new LinkedHashSet<>();
+		for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+			if (interfaceAddress.getBroadcast() != null)
+				broadcastAddresses.add(interfaceAddress.getBroadcast().getHostAddress());
+		}
+		if (broadcastAddresses.isEmpty())
+			broadcastAddresses.add(ALL_INTERFACES_BROADCAST_ADDRESS);
+		return broadcastAddresses;
+	}
+
+	public static String getFirstBroadcast(Set<String> broadcastAddresses) {
+		Validator.checkIsNotNull(broadcastAddresses, "broadcastAddresses");
+		return broadcastAddresses.stream()
+				.findFirst()
+				.orElse(null);
+	}
+
+	public static DatagramPacket createMessagePacket(InetAddress inetAddress, int port, String message) {
+		Validator.checkIsNotNull(inetAddress, "inetAddress");
+		Validator.checkIsNotNull(message, "message");
+		byte[] buffer = message.getBytes(StandardCharsets.UTF_8);
+		return new DatagramPacket(buffer, 0, buffer.length, inetAddress, port);
+	}
+
+	public static DatagramPacket createABufferedPacket(int length) {
+		byte[] buffer = new byte[ (length < MIN_BUFFER_SIZE) ? MIN_BUFFER_SIZE : length ];
+		return new DatagramPacket(buffer, 0, buffer.length);
+	}
+
+	public static String getBufferedData(DatagramPacket packet) {
+		Validator.checkIsNotNull(packet, "packet");
+		return new String(packet.getData(), StandardCharsets.UTF_8).trim();
+	}
+
+	@Contract("_ -> new")
+	public static @NotNull Cidr convertStringToCidr(String cidrNotation) {
+		Validator.checkCidrNotation(cidrNotation);
+		String[] parts = cidrNotation.split("/");
+		String networkId = parts[0];
+		String subnetMask = convertPrefixToMask(Integer.parseInt(parts[1]));
+		return new Cidr(networkId, subnetMask);
+	}
+
+	public static @Nullable String convertPrefixToMask(int subnetPrefix) {
+		Validator.checkBounds(subnetPrefix, 0, 32, "subnetPrefix");
+		try {
+			byte[] subnetMaskBytes = new byte[4];
+			int bitsOfNetwork = 0xffffffff << (32 - subnetPrefix);
+			for (int i = 0; i < 4; i++) {
+				subnetMaskBytes[i] = (byte) ((bitsOfNetwork >> (24 - i * 8)) & 0xff);
+			}
+			InetAddress mascaraInet = InetAddress.getByAddress(subnetMaskBytes);
+			return mascaraInet.getHostAddress();
+		} catch (UnknownHostException e) {
+			return null;
+		}
+	}
+
+	public static int convertMaskToPrefix(String subnetMask) {
+		Validator.checkIsAValidIpv4(subnetMask, "subnetMask");
+		try {
+			InetAddress subnetInetAddress = InetAddress.getByName(subnetMask);
+			byte[] subnetMaskBytes = subnetInetAddress.getAddress();
+			int prefix = 0;
+			for (byte b : subnetMaskBytes) {
+				for (int i = 7; i >= 0; i--) {
+					if (((b >> i) & 1) == 1) {
+						prefix++;
+					}
+				}
+			}
+			return prefix;
+		} catch (UnknownHostException e) {
+			return -1;
+		}
+	}
+
+	@Contract(pure = true)
+	public static String clearIpv6Address(String address) {
+		checkIsNotNull(address, "address");
+		String[] divider = address.split("%");
+		if (divider.length == 0)
+			return address;
+		return divider[0];
+	}
+
+}

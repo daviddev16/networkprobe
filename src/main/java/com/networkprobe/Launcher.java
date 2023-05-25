@@ -1,14 +1,11 @@
 package com.networkprobe;
 
-
-import com.networkprobe.core.Template;
-import com.networkprobe.core.command.caching.ProcessedResponseEntity;
 import com.networkprobe.core.config.JsonTemplateLoader;
 import com.networkprobe.core.api.TemplateLoader;
-import com.networkprobe.core.config.model.Command;
 import com.networkprobe.core.factory.CommandResponseFactory;
 import com.networkprobe.core.api.ResponseEntityFactory;
 import com.networkprobe.core.networking.MappedNetworkFunctions;
+import com.networkprobe.core.networking.NetworkServicesFacade;
 import com.networkprobe.core.reflection.ClassMapperHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +16,9 @@ public class Launcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
-    private static final MappedNetworkFunctions MAPPED_NETWORK_FUNCTIONS = new MappedNetworkFunctions();
-
     public static void main(String[] args) throws Exception {
+
+        Thread.currentThread().setName("network-probe-main");
 
         LOG.info("\n\n _______          __                       __     __________             ___.           \n" +
                 " \\      \\   _____/  |___  _  _____________|  | __ \\______   \\______  ____\\_ |__   ____  \n" +
@@ -31,24 +28,18 @@ public class Launcher {
                 "        \\/     \\/                              \\/                             \\/     \\/ \n\n");
         LOG.info("Iniciando Network Probe...");
 
+        NetworkServicesFacade.initialize();
+
         final ClassMapperHandler handler = new ClassMapperHandler();
-        handler.extract(MAPPED_NETWORK_FUNCTIONS);
+        handler.extract(MappedNetworkFunctions.COMMON);
 
         final ResponseEntityFactory responseEntityFactory = new CommandResponseFactory(handler);
 
         final TemplateLoader jsonTemplateLoader = new JsonTemplateLoader();
         jsonTemplateLoader.load(new File("./template.json"), responseEntityFactory);
 
-        Template template = new Template(jsonTemplateLoader);
-
-        for (int i = 0; i < 10; i++) {
-            Command command = template.getCommand("alterdata_shop");
-            ProcessedResponseEntity responseEntity = (ProcessedResponseEntity) command.getResponse();
-            String response = responseEntity.getContent();
-            System.out.println(response);
-        }
+        NetworkServicesFacade.getInstance().launchAllServices(jsonTemplateLoader);
 
     }
-
 
 }

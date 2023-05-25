@@ -1,0 +1,21 @@
+# Mapped Functions Usage
+
+${<function_name>|<arg0>|...|...}
+
+============================================================
+
+getAddressOf:
+
+    ${getAddressOf|<networkInterfaceName>|<inetAddressType>|<index>}
+
+    - Descrição: Retorna o endereço IP requisitado da interface de rede passada como argumento.
+
+    - Argumentos:
+        - networkInterfaceName: Nome da interface de rede.
+        - inetAddressType: Tipo de endereço (IPv4 ou IPv6).
+        - index: Índice do endereço IP da interface de rede (networkInterfaceName).
+                 Caso a interface só tenha 1 IP, o campo deve ser preenchido com 0.
+
+    - Exemplos:
+        - ${getAddressOf|ens33|IPV4|0}
+        - ${getAddressOf|eth0|IPV4|1}
