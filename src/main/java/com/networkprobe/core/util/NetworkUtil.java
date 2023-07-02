@@ -1,7 +1,6 @@
 package com.networkprobe.core.util;
 
-import com.networkprobe.core.config.model.Cidr;
-import org.jetbrains.annotations.Contract;
+import com.networkprobe.core.config.CidrNotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,11 +12,11 @@ import static com.networkprobe.core.util.Validator.checkIsNotNull;
 
 public class NetworkUtil {
 
-	public static final int MIN_BUFFER_SIZE = 16;
+	public static final int MIN_BUFFER_SIZE = 2;
 	public static final String ALL_INTERFACES_BROADCAST_ADDRESS = "255.255.255.255";
 
 	public static NetworkInterface getNetworkInterfaceByAddress(String addressString)
-			throws InvalidPropertiesFormatException, UnknownHostException, SocketException {
+			throws UnknownHostException, SocketException {
 		Validator.checkIsAValidIpv4(addressString, "addressString");
 		InetAddress address = InetAddress.getByName(addressString);
 		return NetworkInterface.getByInetAddress(address);
@@ -59,13 +58,32 @@ public class NetworkUtil {
 		return new String(packet.getData(), StandardCharsets.UTF_8).trim();
 	}
 
-	@Contract("_ -> new")
-	public static @NotNull Cidr convertStringToCidr(String cidrNotation) {
+	public static @NotNull CidrNotation convertStringToCidrNotation(String cidrNotation) {
 		Validator.checkCidrNotation(cidrNotation);
 		String[] parts = cidrNotation.split("/");
 		String networkId = parts[0];
 		String subnetMask = convertPrefixToMask(Integer.parseInt(parts[1]));
-		return new Cidr(networkId, subnetMask);
+		/*  usar o builder */
+		return new CidrNotation(convertStringToByteArray(networkId),
+				convertStringToByteArray(subnetMask));
+	}
+
+	@Nullable
+	public static byte[] convertStringToByteArray(String address) {
+		Validator.checkIsNotNull(address, "address");
+		try {
+			return InetAddress.getByName(address).getAddress();
+		} catch (UnknownHostException e) {
+			return null;
+		}
+	}
+
+	public static String convertByteArrayToString(byte[] networkOctets) {
+		StringJoiner joiner = new StringJoiner(".");
+		for (byte octet : networkOctets) {
+			joiner.add(String.valueOf(octet & 0xFF));
+		}
+		return joiner.toString();
 	}
 
 	public static @Nullable String convertPrefixToMask(int subnetPrefix) {
@@ -102,7 +120,6 @@ public class NetworkUtil {
 		}
 	}
 
-	@Contract(pure = true)
 	public static String clearIpv6Address(String address) {
 		checkIsNotNull(address, "address");
 		String[] divider = address.split("%");

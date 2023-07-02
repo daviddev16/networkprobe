@@ -1,12 +1,11 @@
 package com.networkprobe;
 
-import com.networkprobe.core.config.JsonTemplateLoader;
-import com.networkprobe.core.api.TemplateLoader;
-import com.networkprobe.core.factory.CommandResponseFactory;
-import com.networkprobe.core.api.ResponseEntityFactory;
-import com.networkprobe.core.networking.MappedNetworkFunctions;
-import com.networkprobe.core.networking.NetworkServicesFacade;
-import com.networkprobe.core.reflection.ClassMapperHandler;
+import com.networkprobe.core.*;
+import com.networkprobe.core.api.TemplateAdapter;
+import com.networkprobe.core.CommandResponseFactory;
+import com.networkprobe.core.UsableNetworkDataInventory;
+import com.networkprobe.core.NetworkServicesFacade;
+import com.networkprobe.core.ClassMapperHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,20 +25,17 @@ public class Launcher {
                 "/    |    \\  ___/|  |  \\     (  <_> )  | \\/    <   |    |    |  | \\(  <_> ) \\_\\ \\  ___/ \n" +
                 "\\____|__  /\\___  >__|   \\/\\_/ \\____/|__|  |__|_ \\  |____|    |__|   \\____/|___  /\\___  >\n" +
                 "        \\/     \\/                              \\/                             \\/     \\/ \n\n");
+
         LOG.info("Iniciando Network Probe...");
 
-        NetworkServicesFacade.initialize();
+        SingletonDirectory.registerAllDeclaredSingletonClasses();
 
-        final ClassMapperHandler handler = new ClassMapperHandler();
-        handler.extract(MappedNetworkFunctions.COMMON);
+        ClassMapperHandler.getInstance().extract(UsableNetworkDataInventory.getInventory());
 
-        final ResponseEntityFactory responseEntityFactory = new CommandResponseFactory(handler);
+        TemplateAdapter templateAdapter = JsonTemplateAdapter.getTemplateInstance();
+        templateAdapter.load(new File("./template.json"), CommandResponseFactory.getFactory());
 
-        final TemplateLoader jsonTemplateLoader = new JsonTemplateLoader();
-        jsonTemplateLoader.load(new File("./template.json"), responseEntityFactory);
-
-        NetworkServicesFacade.getInstance().launchAllServices(jsonTemplateLoader);
+        NetworkServicesFacade.getNetworkServices().launchAllServices();
 
     }
-
 }

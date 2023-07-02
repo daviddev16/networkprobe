@@ -14,8 +14,24 @@
 	],
 	"commands": [
 		{
+			"name": "@internal:unauthorized",
+			"response": "{\"message\": \"unauthorized\"}",
+			"routes": ["any"],
+			"cached_once": true,
+			"comment":  "Um acesso não autorizado ocorre quando um cliente consegue se conectar através de um socket TCP/IP, porém, a rede de origem não é aceita pelo comando desejado.",
+			"usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
+		},
+		{
+			"name": "@internal:unknown",
+			"response": "{\"message\": \"unknown\"}",
+			"routes": ["any"],
+			"cached_once": true,
+			"comment":  "Uma resposta com mensagem desenconhecida informa que o comando requisitado, não foi encontrado no mapa de comandos.",
+			"usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
+		},
+		{
 			"name": "alterdata_pack",
-			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\"}",
+			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressByMac|98-83-89-77-ac-62|0}\"}",
 			"routes": ["default_subnet_route"],
 			"cached_once": false
 		},

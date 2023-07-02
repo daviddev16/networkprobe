@@ -1,7 +1,7 @@
 package com.networkprobe.core.util;
 
 import com.networkprobe.core.exception.InvalidPropertyException;
-import org.json.JSONObject;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.regex.Pattern;
@@ -15,7 +15,7 @@ public class Validator {
 
     /* IPV4 ONLY */
     public static final String CIDR_NOTATION_PATTERN =
-            "^((?:\\d{1,2}|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:\\d{1,2}|1\\d{2}|2[0-4]\\d|25[0-5])(?:/(?:[1-9]|[1-2]\\d|3[0-2]))$";
+            "^((?:\\d{1,2}|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:\\d{1,2}|1\\d{2}|2[0-4]\\d|25[0-5])/(?:[1-9]|[1-2]\\d|3[0-2])$";
 
     public static String checkIsAValidIpv4(String address, String name) {
         if (!Pattern.matches(IPV4_REGEX_PATTERN, checkIsNullOrEmpty(address, name)))
@@ -72,6 +72,13 @@ public class Validator {
         if (str == null || str.isEmpty())
             throw new NullPointerException( format("O valor de texto \"%s\" é nulo ou vazio.", name) );
         return str;
+    }
+
+    public static @NotNull String sanitize(String str) {
+        checkIsNotNull(str, "str");
+        return str
+                .replaceAll("[^a-zA-Z0-9_]", "")
+                .replaceAll("\\s+", "");
     }
 
 }
