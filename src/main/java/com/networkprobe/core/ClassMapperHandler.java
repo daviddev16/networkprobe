@@ -24,7 +24,7 @@ import static java.lang.String.*;
 @Singleton(creationType = SingletonType.DYNAMIC, order = -10)
 public final class ClassMapperHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClassMapperHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ClassMapperHandler.class);
     public static final String NONE = "<<?>>";
 
     private final Map<String, MethodInfo> methods = Collections.synchronizedMap(new HashMap<>());
@@ -93,11 +93,14 @@ public final class ClassMapperHandler {
                             "Ordenação de tipos correta: %s. Verifique os argumentos da função no arquivo de configuração.",
                     methodInfo.getMethod().getName(), convertParametersToStrings(methodInfo.getMethod()));
 
-        else
-            message = String.format("Houve um erro inesperado na execução da " +
-                    "função \"%s\".", methodInfo.getMethod().getName());
+        else if (methodInfo == null)
+            message = "Um método inexistente foi informado";
 
-        throw new ExecutionFailedException(exception.getClass().getSimpleName() + " -> " + message);
+        else
+            message = exception.getMessage();
+
+        ExceptionHandler.unexpected(LOG, new ExecutionFailedException(exception
+                .getClass().getSimpleName() + " -> " + message), 177);
     }
 
     private Object invokeMethod(Method method, List<Object> args)

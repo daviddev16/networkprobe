@@ -6,6 +6,7 @@ import com.networkprobe.core.api.SocketDataMessageProcessor;
 import com.networkprobe.core.api.Template;
 import com.networkprobe.core.config.CidrNotation;
 import com.networkprobe.core.config.Command;
+import com.networkprobe.core.config.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,8 @@ public class SocketCommandProcessor implements SocketDataMessageProcessor {
     public String processSocketMessage(String message, final Socket socket) {
 
         Command command = template.getCommands().get(message);
+        command = (command == null) ? template.getCommands().get(Key.CMD_UNKNOWN) : command;
+
         ResponseEntity<?> responseEntity = command.getResponse();
 
         if (checkIsClientAllowed(socket.getInetAddress().getAddress(), command.getRoutes()))
@@ -36,19 +39,19 @@ public class SocketCommandProcessor implements SocketDataMessageProcessor {
 
     private boolean checkIsClientAllowed(byte[] clientAddressArray, Set<CidrNotation> allowedNetworks) {
         for (CidrNotation networkCidr : allowedNetworks) {
-            if (accept(clientAddressArray, networkCidr))
+            if (checkNetworkId(clientAddressArray, networkCidr))
                 return true;
         }
         return false;
     }
 
-    private boolean accept(byte[] address, CidrNotation allowedNetwork) {
+    private boolean checkNetworkId(byte[] address, CidrNotation allowedNetwork) {
         byte[] networkByteArray = allowedNetwork.getNetwork();
         for (int i = 0; i < address.length; i++) {
-            if (networkByteArray[i] != getNetworkId(address, allowedNetwork.getSubnetMask())[i])
-                return false;
+            if (getNetworkId(address, allowedNetwork.getSubnetMask())[i] == networkByteArray[i])
+                return true;
         }
-        return true;
+        return false;
     }
 
     private byte[] getNetworkId(byte[] socketAddress, byte[] subnetMask) {

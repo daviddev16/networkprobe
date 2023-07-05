@@ -10,36 +10,49 @@
 		{
 			"name": "default_subnet_route",
 			"cidr": "192.168.1.0/24"
+		},
+		{
+			"name": "bimer_rota_subrede",
+			"cidr": "10.201.40.0/24"
 		}
 	],
 	"commands": [
 		{
 			"name": "@internal:unauthorized",
-			"response": "{\"message\": \"unauthorized\"}",
+			"response": "unauthorized_request",
 			"routes": ["any"],
 			"cached_once": true,
 			"comment":  "Um acesso não autorizado ocorre quando um cliente consegue se conectar através de um socket TCP/IP, porém, a rede de origem não é aceita pelo comando desejado.",
-			"usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
+			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
 		},
 		{
 			"name": "@internal:unknown",
-			"response": "{\"message\": \"unknown\"}",
+			"response": "unknown",
 			"routes": ["any"],
 			"cached_once": true,
 			"comment":  "Uma resposta com mensagem desenconhecida informa que o comando requisitado, não foi encontrado no mapa de comandos.",
-			"usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
+			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
 		},
 		{
 			"name": "alterdata_pack",
-			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressByMac|98-83-89-77-ac-62|0}\"}",
-			"routes": ["default_subnet_route"],
-			"cached_once": false
+			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
+			"routes": ["default_subnet_route", "bimer_rota_subrede"],
+			"cached_once": false,
+			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK"
+		},
+		{
+			"name": "alterdata_bimer",
+			"response": "{\"database\": \"ALTERDATA (ODBC)\", \"address\": \"10.201.40.111\", \"database_type\": \"SQL Server\"}",
+			"routes": ["bimer_rota_subrede"],
+			"cached_once": true,
+			"#usage": "Esse comando é usado para fazer conexões vindas do sistema Alterdata Bimer liberado apenas para a subrede \"10.201.40.0/24\""
 		},
 		{
 			"name": "alterdata_shop",
-			"response": "{\"database\": \"ALTERDATA_SHOP\", \"address\": \"${getAddressOf|eth6|ipv4|0}\"}",
-			"routes": ["default_subnet_route"],
-			"cached_once": false
+			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"SQL Server\", \"nfeasy_shared_folder\": \"\\\\\\${getAddressOf|eth6|ipv4|0}\\\\\\DadosNFeasy\"}",
+			"routes": ["default_subnet_route", "bimer_rota_subrede"],
+			"cached_once": false,
+			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA SHOP"
 		}
 	]
 }

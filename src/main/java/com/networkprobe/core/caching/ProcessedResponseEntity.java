@@ -1,7 +1,11 @@
 package com.networkprobe.core.caching;
 
+import com.networkprobe.core.ExceptionHandler;
 import com.networkprobe.core.command.Simplexer;
 import com.networkprobe.core.ClassMapperHandler;
+import com.networkprobe.core.exception.ExecutionFailedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +15,8 @@ import java.util.List;
  * armazena em cache para ser usado em uma próxima requisição.
  * */
 public class ProcessedResponseEntity extends CachedResponseEntity {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProcessedResponseEntity.class);
 
     private final ClassMapperHandler classMapperHandler;
     private final List<Simplexer.StringFunctionToken> functionTokens;
@@ -33,7 +39,7 @@ public class ProcessedResponseEntity extends CachedResponseEntity {
         for (Simplexer.StringFunctionToken token : getFunctionTokens()) {
             List<String> arguments = token.getArguments();
             String methodName = token.getMethodName();
-            String evaluatedValue = safe( getClassMapperHandler().execute(methodName, arguments) );
+            String evaluatedValue = safe(getClassMapperHandler().execute(methodName, arguments));
             content = Simplexer.overlap(content, token, evaluatedValue);
         }
         return content;

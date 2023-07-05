@@ -3,12 +3,10 @@ package com.networkprobe.core;
 import com.networkprobe.core.annotation.AddressAsInventory;
 import com.networkprobe.core.annotation.Internal;
 import com.networkprobe.core.annotation.Singleton;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
 import java.util.Enumeration;
-import java.util.List;
 
 import static com.networkprobe.core.util.NetworkUtil.*;
 
@@ -33,20 +31,6 @@ public final class UsableNetworkDataInventory {
             NetworkInterface ni = interfaces.nextElement();
             if (ni.getName().equalsIgnoreCase(interfaceName)) {
                 return getInetAddressOfInterface(ni, inetAddressType, index);
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    public String getAddressByMac(@NotNull String macAddress, int index) throws SocketException {
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-        while (interfaces.hasMoreElements()) {
-            NetworkInterface networkInterface = interfaces.nextElement();
-            byte[] hardwareAddress = networkInterface.getHardwareAddress();
-            if (hardwareAddress != null && toMacAddress(hardwareAddress).equalsIgnoreCase(macAddress)) {
-                List<InterfaceAddress> interfaceAddresses = networkInterface.getInterfaceAddresses();
-                return interfaceAddresses.get(index).getAddress().getHostAddress();
             }
         }
         return null;
@@ -81,8 +65,8 @@ public final class UsableNetworkDataInventory {
     @Internal
     private String toMacAddress(byte[] hardwareAddress) {
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < hardwareAddress.length; i++) {
-            builder.append(String.format("%02x", hardwareAddress[i])).append(' ');
+        for (byte address : hardwareAddress) {
+            builder.append(String.format("%02x", address)).append(' ');
         }
         return builder.toString().trim();
     }

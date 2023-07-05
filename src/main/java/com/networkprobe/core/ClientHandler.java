@@ -17,9 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientHandler extends ExecutionWorker {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientHandler.class);
-    private static final Template template = JsonTemplateAdapter.getTemplateInstance();
+    private static final Logger LOG = LoggerFactory.getLogger(ClientHandler.class);
+
     private static final SocketDataMessageProcessor PROCESSOR = new SocketCommandProcessor();
+    private static final Template template = JsonTemplateAdapter.getTemplateInstance();
     private static final AtomicInteger ID = new AtomicInteger(-1);
 
     private final Socket clientSocket;
@@ -35,26 +36,19 @@ public class ClientHandler extends ExecutionWorker {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             Scanner in = new Scanner(clientSocket.getInputStream());
             while (in.hasNextLine()) {
-                String message = in.nextLine().trim();
-                String response = PROCESSOR.processSocketMessage(message, clientSocket);
+                String message = in.nextLine();
+                String response = PROCESSOR.processSocketMessage(message.trim(), clientSocket);
                 out.println(response);
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ExceptionHandler.unexpected(LOG, e, 190);
         }
     }
 
     @Override
     public void onStop() {
-        try {
-            if (clientSocket != null)
-                clientSocket.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            ID.decrementAndGet();
-            LOGGER.debug("Comunicação encerrada.");
-        }
+        NetworkUtil.closeQuietly(clientSocket);
+        ID.decrementAndGet();
     }
 
     public Socket getClientSocket() {

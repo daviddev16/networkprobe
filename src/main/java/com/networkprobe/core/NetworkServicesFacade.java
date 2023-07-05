@@ -27,8 +27,8 @@ public class NetworkServicesFacade {
 
         if (!JsonTemplateAdapter.getTemplateInstance().getNetworking().isDiscoveryEnabled())
             LOGGER.info("O serviço de descoberta de rede foi desativado nas configurações.");
-        else
-        {
+
+        else {
             NetworkDiscoveryService discoveryService = NetworkDiscoveryService.getDiscoveryService();
             discoveryService.start();
         }

@@ -11,6 +11,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /** Responsável por responder a pacotes "HELLO" de UDP vindos da rede **/
 
@@ -21,7 +23,7 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     private static final Template template = JsonTemplateAdapter.getTemplateInstance();
 
     public static final int DISCOVERY_PORT = 14476;
-    public static final String HELLO_FLAG = "H";
+    public static final byte[] HELLO_FLAG = "H".getBytes(StandardCharsets.UTF_8);
 
     private DatagramSocket datagramSocket;
 
@@ -56,14 +58,13 @@ public class NetworkDiscoveryService extends ExecutionWorker {
         }
     }
 
-    private void onReceivedPacket(DatagramPacket packet) throws IOException {
-        String received = NetworkUtil.getBufferedData(packet);
-        if (received.equals(HELLO_FLAG)) {
-            datagramSocket.send(NetworkUtil.createMessagePacket(packet.getAddress(),
-                    packet.getPort(), HELLO_FLAG));
-        } else {
+    private void onReceivedPacket(DatagramPacket packet) throws IOException
+    {
+        if (packet.getData()[0] == HELLO_FLAG[0])
+            datagramSocket.send(new DatagramPacket(HELLO_FLAG, 0, HELLO_FLAG.length,
+                    packet.getAddress(), packet.getPort()));
+        else
             LOGGER.warn("UNKNOWN FLAG RECEIVED");
-        }
     }
 
     @Override

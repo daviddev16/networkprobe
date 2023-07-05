@@ -128,4 +128,11 @@ public class NetworkUtil {
 		return divider[0];
 	}
 
+	public static void closeQuietly(Socket socket) {
+		try {
+			if (socket != null)
+				socket.close();
+		} catch (Exception ignored) {/*  */}
+	}
+
 }

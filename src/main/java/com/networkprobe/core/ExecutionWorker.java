@@ -47,6 +47,10 @@ public abstract class ExecutionWorker implements Runnable {
         onStop();
     }
 
+    public boolean isAlive() {
+        return state;
+    }
+
     protected void onBegin() {}
     protected void onUpdate() {}
     protected void onStop() {}
