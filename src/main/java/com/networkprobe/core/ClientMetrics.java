@@ -1,5 +1,6 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.api.Template;
 import com.networkprobe.core.util.Validator;
 
 public class ClientMetrics {
@@ -9,23 +10,16 @@ public class ClientMetrics {
 
     public ClientMetrics() {}
 
-    /* TODO: Se precisar especificar algum valor para atualizar a métrica, o parametro 'ignoredValue' deve ser usado. */
-    public void updateClientMetric(ClientMetricType clientMetricType, String ignoredValue) {
-        Validator.checkIsNotNull(clientMetricType, "clientMetricType");
-        synchronized (ClientMetrics.class) {
-            switch (clientMetricType) {
-                case UDP_RECEIVED:
-                    udpReceivedCount += 1;
-                    break;
-                case TCP_CONNECTION:
-                    tcpConnectionCount += 1;
-                    break;
-            }
-        }
-    }
-
     public void updateClientMetric(ClientMetricType clientMetricType) {
-        updateClientMetric(clientMetricType, null);
+        Validator.checkIsNotNull(clientMetricType, "clientMetricType");
+        switch (clientMetricType) {
+            case UDP_RECEIVED:
+                udpReceivedCount += 1;
+                break;
+            case TCP_CONNECTION:
+                tcpConnectionCount += 1;
+                break;
+        }
     }
 
     public int getTcpConnectionCount() {

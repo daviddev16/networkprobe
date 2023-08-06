@@ -27,8 +27,8 @@ public interface ResponseEntity<T> {
     T getContent();
 
     /**
-     * isCachedOnce será utilizado para determinar se a resposta vai precisar
-     * ser re-processada ou o conteúdo será processado pela primeira vez, será
+     * isCachedOnce será utilizado para determinar se a response vai precisar
+     * ser re-processada ou o conteúdo processado pela primeira vez, será
      * utilizado novamente nas próximas vezes. Esse método irá variar de acordo
      * com a implementação.
      *

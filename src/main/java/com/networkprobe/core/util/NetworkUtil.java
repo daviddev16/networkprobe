@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -56,6 +57,28 @@ public class NetworkUtil {
 	public static String getBufferedData(DatagramPacket packet) {
 		Validator.checkIsNotNull(packet, "packet");
 		return new String(packet.getData(), StandardCharsets.UTF_8).trim();
+	}
+
+	public static InetAddress getInetAddress(int simplifiedAddress) throws UnknownHostException {
+		byte[] addressArray = new byte[4];
+		for (int i = 0; i < addressArray.length; i++) {
+			addressArray[addressArray.length - i - 1] = (byte) (simplifiedAddress & 0xFF);
+			simplifiedAddress >>= 8;
+		}
+		return InetAddress.getByAddress(addressArray);
+	}
+
+	public static int getSimplifiedAddress(InetAddress inetAddress) {
+		int value = 0;
+		byte[] addressArray = inetAddress.getAddress();
+		for (int i = 0; i < addressArray.length; i++) {
+			value = (value << 8) | (addressArray[i] & 0xFF);
+		}
+		/*
+		 * Fazer teste de performance como:
+		 * ByteBuffer.wrap(inetAddress.getAddress()).getInt();
+		*/
+		return value;
 	}
 
 	public static @NotNull CidrNotation convertStringToCidrNotation(String cidrNotation) {

@@ -1,6 +1,8 @@
 package com.networkprobe.core.api;
 
+import com.networkprobe.core.JsonTemplateAdapter;
 import com.networkprobe.core.config.Command;
+import com.networkprobe.core.config.Key;
 import com.networkprobe.core.config.Networking;
 import com.networkprobe.core.config.Route;
 
@@ -29,5 +31,20 @@ public interface Template {
      * Retorna um Map contendo as informações dos comandos do Template
      * */
     Map<String, Command> getCommands();
+
+    default String unauthorizedResponse() {
+        return defaultInternalResponse(Key.CMD_UNAUTHORIZED);
+    }
+
+    default String unknownResponse() {
+        return defaultInternalResponse(Key.CMD_UNKNOWN);
+    }
+
+    default String defaultInternalResponse(String key) {
+        return (String) getCommands()
+                .get(key)
+                .getResponse()
+                .getContent();
+    }
 
 }

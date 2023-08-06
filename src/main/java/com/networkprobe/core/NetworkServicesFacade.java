@@ -1,6 +1,7 @@
 package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.api.Template;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,14 +11,18 @@ import org.slf4j.LoggerFactory;
 @Singleton(creationType = SingletonType.DYNAMIC, order = -501)
 public class NetworkServicesFacade {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkServicesFacade.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NetworkServicesFacade.class);
+    private static NetworkServicesFacade networkServicesFacadeInstance;
 
     public NetworkServicesFacade()
     {
         SingletonDirectory.denyInstantiation(this);
     }
 
-    public void launchAllServices() throws Exception {
+    public void launchAllServices() {
+
+        if (NetworkProbeOptions.isDebugSocketEnabled())
+            LOG.warn("O modo DEBUG_SOCKET pode causar queda na perfomance da aplicação, utilize somente se for necessário.");
 
         NetworkMonitorService monitorService = NetworkMonitorService.getMonitor();
         monitorService.start();
@@ -26,7 +31,7 @@ public class NetworkServicesFacade {
         exchangeService.start();
 
         if (!JsonTemplateAdapter.getTemplateInstance().getNetworking().isDiscoveryEnabled())
-            LOGGER.info("O serviço de descoberta de rede foi desativado nas configurações.");
+            LOG.warn("O serviço de descoberta de rede foi desativado nas configurações.");
 
         else {
             NetworkDiscoveryService discoveryService = NetworkDiscoveryService.getDiscoveryService();

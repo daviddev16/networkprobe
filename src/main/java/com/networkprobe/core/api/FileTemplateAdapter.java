@@ -3,10 +3,10 @@ package com.networkprobe.core.api;
 import java.io.File;
 
 /**
- * TemplateAdapter permite que seja possível fazer a implementação de um Template
+ * FileTemplateAdapter permite que seja possível fazer a implementação de um Template
  * carregado através de um arquivo.
  * */
-public interface TemplateAdapter extends Template {
+public interface FileTemplateAdapter extends Template {
 
     /**
      * Faz o carregamento do {@link Template} através de um arquivo e define

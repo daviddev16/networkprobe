@@ -1,9 +1,8 @@
 package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.api.SocketDataMessageProcessor;
 import com.networkprobe.core.api.Template;
-import com.networkprobe.core.command.SocketCommandProcessor;
+import com.networkprobe.core.util.NetworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +14,7 @@ import java.net.Socket;
 @Singleton(creationType = SingletonType.LAZY)
 public final class NetworkExchangeService extends ExecutionWorker {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkExchangeService.class);
-    private static final Template templateLoader = JsonTemplateAdapter.getTemplateInstance();
-    private final SocketDataMessageProcessor processor = new SocketCommandProcessor();
+    private static final Logger LOG = LoggerFactory.getLogger(NetworkExchangeService.class);
     public static final int SERVER_PORT = 14477;
 
     private ServerSocket serverSocket;
@@ -31,27 +28,34 @@ public final class NetworkExchangeService extends ExecutionWorker {
     @Override
     public void onBegin() {
         try {
-            String bindAddress = templateLoader.getNetworking().getTcpBindAddress();
-            int tcpBacklog = templateLoader.getNetworking().getTcpSocketBacklog();
-            InetAddress inetAddress = InetAddress.getByName(bindAddress);
-            serverSocket = new ServerSocket(SERVER_PORT, tcpBacklog, inetAddress);
-            LOGGER.info("Escutando na porta {} por requisições de comandos.", SERVER_PORT);
+            Template template = JsonTemplateAdapter.getTemplateInstance();
+            serverSocket = new ServerSocket(SERVER_PORT, template.getNetworking().getTcpSocketBacklog(),
+                    InetAddress.getByName(template.getNetworking().getTcpBindAddress()));
+            LOG.info("Escutando na porta {} por requisições de comandos.", SERVER_PORT);
         } catch (Exception e) {
-            ExceptionHandler.unexpected(LOGGER, e, 156);
+            ExceptionHandler.unexpected(LOG, e, 156);
         }
     }
 
     @Override
     public void onUpdate() {
         try {
+            final NetworkMonitorService monitorService = NetworkMonitorService.getMonitor();
             synchronized (serverSocket) {
                 Socket clientSocket = serverSocket.accept();
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
-                clientHandler.start();
+                int simplifiedAddress = NetworkUtil.getSimplifiedAddress(clientSocket.getInetAddress());
+                ClientMetrics clientMetrics = monitorService.getMetrics(simplifiedAddress);
+                clientMetrics.updateClientMetric(ClientMetricType.TCP_CONNECTION);
+                if (allowTcpConnection(clientMetrics)) {
+                    ClientHandler clientHandler = new ClientHandler(clientSocket);
+                    clientHandler.start();
+                } else if (NetworkProbeOptions.isDebugSocketEnabled()) {
+                    LOG.debug("'{}' ultrapassou o limite de conexões configurado.", clientSocket
+                            .getInetAddress().getHostAddress());
+                }
             }
-        } catch (Exception e)
-        {
-            ExceptionHandler.unexpected(LOGGER, e, 166);
+        } catch (Exception e) {
+            ExceptionHandler.unexpected(LOG, e, 166);
         }
     }
 
@@ -61,6 +65,11 @@ public final class NetworkExchangeService extends ExecutionWorker {
             if (serverSocket != null)
                 serverSocket.close();
         } catch (Exception e) { /* ignore */ }
+    }
+
+    public boolean allowTcpConnection(ClientMetrics clientMetrics) {
+        return clientMetrics.getTcpConnectionCount() < JsonTemplateAdapter.getTemplateInstance()
+                .getNetworking().getUdpRequestThreshold();
     }
 
     public static NetworkExchangeService getExchangeService() {

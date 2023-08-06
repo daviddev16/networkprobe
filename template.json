@@ -2,7 +2,8 @@
 	"networking": {
 		"tcp_bind_address": "0.0.0.0",
 		"udp_broadcast_address": "0.0.0.0",
-		"udp_request_threshold": 20,
+		"udp_request_threshold": 1000000,
+		"TODO@tcp_connection_threshold": 100,
 		"tcp_socket_backlog": 50,
 		"enable_discovery": true
 	},
@@ -34,21 +35,21 @@
 			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
 		},
 		{
-			"name": "alterdata_pack",
+			"name": "P10",
 			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
 			"routes": ["default_subnet_route", "bimer_rota_subrede"],
 			"cached_once": false,
 			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK"
 		},
 		{
-			"name": "alterdata_bimer",
+			"name": "B101",
 			"response": "{\"database\": \"ALTERDATA (ODBC)\", \"address\": \"10.201.40.111\", \"database_type\": \"SQL Server\"}",
 			"routes": ["bimer_rota_subrede"],
 			"cached_once": true,
 			"#usage": "Esse comando é usado para fazer conexões vindas do sistema Alterdata Bimer liberado apenas para a subrede \"10.201.40.0/24\""
 		},
 		{
-			"name": "alterdata_shop",
+			"name": "S10",
 			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"SQL Server\", \"nfeasy_shared_folder\": \"\\\\\\${getAddressOf|eth6|ipv4|0}\\\\\\DadosNFeasy\"}",
 			"routes": ["default_subnet_route", "bimer_rota_subrede"],
 			"cached_once": false,

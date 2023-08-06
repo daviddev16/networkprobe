@@ -1,7 +1,7 @@
 package com.networkprobe;
 
 import com.networkprobe.core.*;
-import com.networkprobe.core.api.TemplateAdapter;
+import com.networkprobe.core.api.FileTemplateAdapter;
 import com.networkprobe.core.CommandResponseFactory;
 import com.networkprobe.core.UsableNetworkDataInventory;
 import com.networkprobe.core.NetworkServicesFacade;
@@ -18,6 +18,7 @@ public class Launcher {
     public static void main(String[] args) throws Exception {
 
         Thread.currentThread().setName("network-probe-main");
+        args = new String[] {"--debug-sockets"};
 
         LOG.info("\n\n _______          __                       __     __________             ___.           \n" +
                 " \\      \\   _____/  |___  _  _____________|  | __ \\______   \\______  ____\\_ |__   ____  \n" +
@@ -30,12 +31,16 @@ public class Launcher {
 
         SingletonDirectory.registerAllDeclaredSingletonClasses();
 
+        SingletonDirectory.registerDynamicInstance(NetworkProbeOptions.class,
+                new NetworkProbeOptions(args), SingletonType.INSTANTIATED);
+
         ClassMapperHandler.getInstance().extract(UsableNetworkDataInventory.getInventory());
 
-        TemplateAdapter templateAdapter = JsonTemplateAdapter.getTemplateInstance();
+        FileTemplateAdapter templateAdapter = JsonTemplateAdapter.getTemplateInstance();
         templateAdapter.load(new File("./template.json"), CommandResponseFactory.getFactory());
 
         NetworkServicesFacade.getNetworkServices().launchAllServices();
 
     }
+
 }

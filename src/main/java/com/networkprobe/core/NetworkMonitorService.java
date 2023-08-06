@@ -12,11 +12,10 @@ import java.util.concurrent.TimeUnit;
 @Singleton(creationType = SingletonType.DYNAMIC, order = -500)
 public final class NetworkMonitorService extends ExecutionWorker {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkMonitorService.class);
-    private final Map<String, ClientMetrics> metrics = Collections.synchronizedMap(new HashMap<>());
-
-    /* 30 minutos de monitoramento para a limpeza de métricas */
-    private static final long METRICS_TIMEOUT = 60 * 30;
+    private static final Logger LOG = LoggerFactory.getLogger(NetworkMonitorService.class);
+    private final Map<Integer, ClientMetrics> metrics = Collections.synchronizedMap(new HashMap<>());
+    private static NetworkMonitorService monitorServiceInstance;
+    private static final long METRICS_TIMEOUT = 60;
 
     public NetworkMonitorService()
     {
@@ -27,14 +26,24 @@ public final class NetworkMonitorService extends ExecutionWorker {
     @Override
     protected void onUpdate() {
         try {
-            metrics.clear();
             Thread.sleep(TimeUnit.SECONDS.toMillis(METRICS_TIMEOUT));
+            metrics.clear();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            ExceptionHandler.unexpected(LOG, e, 202);
         }
     }
 
+    public ClientMetrics getMetrics(int simplifiedAddress) {
+        ClientMetrics clientMetrics = metrics.get(simplifiedAddress);
+        if (clientMetrics == null) {
+            clientMetrics = new ClientMetrics();
+            metrics.put(simplifiedAddress, clientMetrics);
+        }
+        return clientMetrics;
+    }
+
     public static NetworkMonitorService getMonitor() {
-        return SingletonDirectory.getSingleOf(NetworkMonitorService.class);
+        return (monitorServiceInstance != null) ? monitorServiceInstance :
+                (monitorServiceInstance = SingletonDirectory.getSingleOf(NetworkMonitorService.class));
     }
 }

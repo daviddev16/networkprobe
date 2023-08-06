@@ -1,4 +1,4 @@
-package com.networkprobe.core.command;
+package com.networkprobe.core.api;
 
 import com.networkprobe.core.util.Validator;
 
@@ -9,6 +9,12 @@ import java.util.StringJoiner;
 
 import static com.networkprobe.core.util.Validator.*;
 
+/**
+ *  TEMPORÁRIO: Simplexer transforma funções detectadas no
+ *  texto para FunctionTokens que podem ser interpretadas.
+ *  Simplexer foi desenvolvido por mim há um tempo atrás
+ *  apenas para testes.
+ *  */
 public class Simplexer {
 
     public static final char CHR_DOLLAR = '$';
@@ -121,10 +127,6 @@ public class Simplexer {
         return functionTokens;
     }
 
-    public String getText() {
-        return text;
-    }
-
     public static String overlap(String original, StringFunctionToken token, String desired) {
         checkIsNullOrEmpty(original, "original");
         checkIsNotNull(token, "token");
@@ -139,7 +141,7 @@ public class Simplexer {
 
     public static final class StringFunctionToken {
 
-        private List<String> arguments = new ArrayList<>();
+        private final List<String> arguments = new ArrayList<>();
 
         private String methodName;
         private int startPosition;
@@ -159,20 +161,8 @@ public class Simplexer {
             return arguments;
         }
 
-        private void setArguments(List<String> arguments) {
-            this.arguments = arguments;
-        }
-
-        public int getStartPosition() {
-            return startPosition;
-        }
-
         private void setStartPosition(int startPosition) {
             this.startPosition = startPosition;
-        }
-
-        public int getEndPosition() {
-            return endPosition;
         }
 
         private void setEndPosition(int endPosition) {
@@ -209,13 +199,8 @@ public class Simplexer {
         }
     }
 
-    public static final class LexerException extends RuntimeException {
-
-        public LexerException() { super(); }
-
-        public LexerException(String message) {
-            super(message);
-        }
-
+    public static final class LexerException extends RuntimeException
+    {
+        public LexerException(String message) { super(message); }
     }
 }

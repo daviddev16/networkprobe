@@ -2,7 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.api.ResponseEntity;
-import com.networkprobe.core.api.TemplateAdapter;
+import com.networkprobe.core.api.FileTemplateAdapter;
 import com.networkprobe.core.config.CidrNotation;
 import com.networkprobe.core.config.Command;
 import com.networkprobe.core.config.Networking;
@@ -25,14 +25,12 @@ import static com.networkprobe.core.util.Validator.*;
 import static java.lang.String.format;
 
 @Singleton(creationType = SingletonType.DYNAMIC, order = -401)
-public class JsonTemplateAdapter implements TemplateAdapter {
+public class JsonTemplateAdapter implements FileTemplateAdapter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonTemplateAdapter.class);
-    private static final List<String> INTERNAL_COMMANDS = new ArrayList<>();
-
-    static {
-        INTERNAL_COMMANDS.add(Key.CMD_UNAUTHORIZED);
-        INTERNAL_COMMANDS.add(Key.CMD_UNKNOWN);
+    private static final Logger LOG = LoggerFactory.getLogger(JsonTemplateAdapter.class);
+    private static final List<String> INTERNAL_COMMANDS = new ArrayList<String>()
+    {
+        { add(Key.CMD_UNAUTHORIZED); add(Key.CMD_UNKNOWN); } 
     };
 
     private Networking networking;
@@ -54,30 +52,30 @@ public class JsonTemplateAdapter implements TemplateAdapter {
 
             JSONObject jsonObject = new JSONObject(IOUtil.readFile(jsonFile));
 
-            LOGGER.info("Carregando e validando informações do template json.");
+            LOG.info("Carregando e validando informações do template json.");
             networking = loadNetworkingSettings(jsonObject);
 
-            routes = Collections.synchronizedMap(new HashMap<>());
+            routes = new HashMap<>();
             loadAllRoutes(jsonObject);
 
             commands = Collections.synchronizedMap(new HashMap<>());
             loadAllCommands(jsonObject, responseEntityFactory);
             verifyExistsInternalCommands();
 
-            LOGGER.info("Template carregado com sucesso.");
+            LOG.info("Template carregado com sucesso.");
 
         } catch (Exception exception) {
 
             if (exception instanceof JSONException)
-                LOGGER.error("Houve um erro na hora de processar o arquivo de configuração Json.");
+                LOG.error("Houve um erro na hora de processar o arquivo de configuração Json.");
 
             else if (exception instanceof IOException || exception instanceof SecurityException)
-                LOGGER.error("Houve um erro na hora de ler o arquivo de configuração Json.");
+                LOG.error("Houve um erro na hora de ler o arquivo de configuração Json.");
 
             else if (exception instanceof InvalidPropertyException)
-                LOGGER.error("Foi identificado um parâmetro inválido dentro das configurações.");
+                LOG.error("Foi identificado um parâmetro inválido dentro das configurações.");
 
-            LOGGER.error("Dentro do arquivo \"{}\", verifique a seguinte informação: " +
+            LOG.error("Dentro do arquivo \"{}\", verifique a seguinte informação: " +
                             "\n{}\n", jsonFile.getName(), exception.getMessage());
 
             Runtime.getRuntime().exit(155);
@@ -88,18 +86,12 @@ public class JsonTemplateAdapter implements TemplateAdapter {
             throws JSONException {
 
         JSONObject networkingJsonObject = jsonObject.getJSONObject(Key.NETWORKING);
-
         return new Networking.Builder()
-                .tcpBindAddress(
-                        networkingJsonObject.getString(Key.TCP_BIND_ADDRESS))
-                .udpBroadcastAddress(
-                        networkingJsonObject.getString(Key.UDP_BROADCAST_ADDRESS))
-                .enableDiscovery(
-                        networkingJsonObject.getBoolean(Key.ENABLE_DISCOVERY))
-                .tcpSocketBacklog(
-                        networkingJsonObject.getInt(Key.TCP_SOCKET_BACKLOG))
-                .udpRequestThreshold(
-                        networkingJsonObject.getInt(Key.UDP_REQUEST_THRESHOLD))
+                .tcpBindAddress(networkingJsonObject.getString(Key.TCP_BIND_ADDRESS))
+                .udpBroadcastAddress(networkingJsonObject.getString(Key.UDP_BROADCAST_ADDRESS))
+                .enableDiscovery(networkingJsonObject.getBoolean(Key.ENABLE_DISCOVERY))
+                .tcpSocketBacklog(networkingJsonObject.getInt(Key.TCP_SOCKET_BACKLOG))
+                .udpRequestThreshold(networkingJsonObject.getInt(Key.UDP_REQUEST_THRESHOLD))
                 .get();
     }
 
@@ -109,8 +101,8 @@ public class JsonTemplateAdapter implements TemplateAdapter {
         JSONArray routesJsonArray = jsonObject.getJSONArray(Key.ROUTES);
 
         /* adiciona as rotas padrões no mapa de rotas */
-        getRoutes().put(Route.ANY.getName(), Route.ANY);
-        getRoutes().put(Route.NONE.getName(), Route.NONE);
+        routes.put(Route.ANY.getName(), Route.ANY);
+        routes.put(Route.NONE.getName(), Route.NONE);
 
         for (Object routeObject : routesJsonArray) {
 
@@ -126,7 +118,7 @@ public class JsonTemplateAdapter implements TemplateAdapter {
                     .name(name)
                     .get();
 
-            getRoutes().put(name, route);
+            routes.put(name, route);
         }
     }
 
@@ -163,7 +155,7 @@ public class JsonTemplateAdapter implements TemplateAdapter {
             for (CidrNotation cidrNotation : getAllValidRoutes(routesJsonArray))
                 commandBuilder.network(cidrNotation);
 
-            getCommands().put(commandName, commandBuilder.get());
+            commands.put(commandName, commandBuilder.get());
         }
     }
 
@@ -180,14 +172,14 @@ public class JsonTemplateAdapter implements TemplateAdapter {
                         "propriedade %s.", i, Key.ROUTES));
 
             String routeName = (String) routeObject;
+            Route commandRoute = routes.get(routeName);
 
-            if (!getRoutes().containsKey(routeName)) {
-                LOGGER.warn("A rota \"{}\" não existe no mapa de rotas, isso pode impedir o " +
+            if (commandRoute == null) {
+                LOG.warn("A rota \"{}\" não existe no mapa de rotas, isso pode impedir o " +
                         "acesso desse comando.", routeName);
                 continue;
             }
-
-            cidrNotations.add(getRoutes().get(routeName).getCidr());
+            cidrNotations.add(commandRoute.getCidr());
         }
         return cidrNotations;
     }
@@ -198,14 +190,14 @@ public class JsonTemplateAdapter implements TemplateAdapter {
                 throw incoherentPropertyTypeException(format("O comando interno '%s' não foi encontrado, tente " +
                         "reinstalar o sistema novamente ou baixar o template padrão.", internalCommandName));
         }
-        LOGGER.info("Os comandos internos foram verificados e não houve erros.");
+        LOG.info("Os comandos internos foram verificados e não houve erros.");
     }
 
     private InvalidPropertyException incoherentPropertyTypeException(String message) {
         return new InvalidPropertyException( message );
     }
 
-    public static TemplateAdapter getTemplateInstance() {
+    public static FileTemplateAdapter getTemplateInstance() {
         return SingletonDirectory.getSingleOf(JsonTemplateAdapter.class);
     }
 

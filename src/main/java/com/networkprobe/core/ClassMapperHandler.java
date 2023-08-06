@@ -25,10 +25,11 @@ import static java.lang.String.*;
 public final class ClassMapperHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClassMapperHandler.class);
-    public static final String NONE = "<<?>>";
-
     private final Map<String, MethodInfo> methods = Collections.synchronizedMap(new HashMap<>());
-    private final Map<Class<?>, Object> instances = new HashMap<>();
+    private final Map<Class<?>, Object> handlerInstances = new HashMap<>();
+    private static ClassMapperHandler classMapperInstance;
+
+    public static final String NONE = "<<?>>";
 
     public ClassMapperHandler()
     {
@@ -41,14 +42,14 @@ public final class ClassMapperHandler {
         checkIsNotNull(instance, "instance");
         Class<?> clazz = instance.getClass();
 
-        if (getInstances().containsKey(clazz))
+        if (getHandlerInstances().containsKey(clazz))
             throw new InstanceAlreadyExistsException(format("Uma instância de %s já foi registrada.", clazz));
 
         else if (!isClassAddressable(clazz))
             throw new IllegalAccessException(format("Não é possível endereçar a classe \"%s\" por que não " +
                     "contém a anotação de endereçamento \"%s\".", clazz.getName(), AddressAsInventory.class.getName()));
 
-        getInstances().put(clazz, instance);
+        getHandlerInstances().put(clazz, instance);
         extractAllMethods(clazz);
     }
 
@@ -103,19 +104,13 @@ public final class ClassMapperHandler {
                 .getClass().getSimpleName() + " -> " + message), 177);
     }
 
-    private Object invokeMethod(Method method, List<Object> args)
-            throws InvocationTargetException, IllegalAccessException {
+    private Object invokeMethod(Method method, List<Object> args) throws InvocationTargetException, IllegalAccessException {
         checkIsNotNull(method, "method");
-
         Class<?> methodType = method.getDeclaringClass();
-        Object instanceOfMethod = getInstances().get(methodType);
+        Object instanceOfMethod = getHandlerInstances().get(methodType);
         Object[] arguments = args.toArray(new Object[args.size()]);
-
         method.setAccessible(true);
-        Object result = method.invoke(instanceOfMethod, arguments);
-        method.setAccessible(false);
-
-        return result;
+        return method.invoke(instanceOfMethod, arguments);
     }
 
     private List<Object> convertArgumentsToTypes(Method method, List<String> arguments) {
@@ -159,10 +154,8 @@ public final class ClassMapperHandler {
     private String convertParametersToStrings(Method method) {
         Class<?>[] parameterTypes = method.getParameterTypes();
         StringJoiner joiner = new StringJoiner(",");
-
         Arrays.stream(parameterTypes).forEach(parameterType ->
                 joiner.add(parameterType.getTypeName()));
-
         return "[" + joiner + "]";
     }
 
@@ -180,11 +173,12 @@ public final class ClassMapperHandler {
         return methods;
     }
 
-    public Map<Class<?>, Object> getInstances() {
-        return instances;
+    public Map<Class<?>, Object> getHandlerInstances() {
+        return handlerInstances;
     }
 
     public static ClassMapperHandler getInstance() {
-        return SingletonDirectory.getSingleOf(ClassMapperHandler.class);
+        return (classMapperInstance != null) ? classMapperInstance :
+                (classMapperInstance = SingletonDirectory.getSingleOf(ClassMapperHandler.class));
     }
 }

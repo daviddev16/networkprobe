@@ -1,0 +1,21 @@
+[
+  {
+    "procedureName": "GetServerIPAddress",
+    "procedureDescription": "Obtem a informação de IPv4 da placa de rede determinado pelo indice do IP, tipo de endereço e nome da placa de rede.",
+    "java@InventoryClassName": "UsableNetworkDataInventory",
+    "java@InventoryFunctionName": "getAddressOf",
+    "procedureArguments":
+    [
+      {"parameter": "deviceName", "value": "eth0", "dataType": "String"},
+      {"parameter": "inetAddressType", "value": "eth0", "dataType": "String"},
+      {"parameter": "ipIndex", "value": 0, "dataType":  "Integer"}
+    ],
+    "onExcetionThrown": {
+      "response": "\"error_message\": \"${EXCEPTION_DESCRIPTION}\"",
+      "shouldExit": false
+    },
+    "onSuccess": {
+      "response": "${RETURNED_VALUE}"
+    }
+  }
+]

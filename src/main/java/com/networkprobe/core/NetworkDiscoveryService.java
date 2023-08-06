@@ -12,18 +12,15 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 /** Responsável por responder a pacotes "HELLO" de UDP vindos da rede **/
 
 @Singleton(creationType = SingletonType.LAZY)
 public class NetworkDiscoveryService extends ExecutionWorker {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkDiscoveryService.class);
-    private static final Template template = JsonTemplateAdapter.getTemplateInstance();
-
-    public static final int DISCOVERY_PORT = 14476;
+    private static final Logger LOG = LoggerFactory.getLogger(NetworkDiscoveryService.class);
     public static final byte[] HELLO_FLAG = "H".getBytes(StandardCharsets.UTF_8);
+    public static final int DISCOVERY_PORT = 14476;
 
     private DatagramSocket datagramSocket;
 
@@ -36,35 +33,50 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     @Override
     protected void onBegin() {
         try {
-
-            String bindAddress = template.getNetworking().getUdpBroadcastAddress();
-            datagramSocket = new DatagramSocket(new InetSocketAddress(InetAddress.getByName(bindAddress), DISCOVERY_PORT));
-            LOGGER.info("Escutando na porta {} por tentativas de descoberta.", DISCOVERY_PORT);
-
-        } catch (Exception e)
-        {
-            ExceptionHandler.unexpected(LOGGER, e, 155);
+            Template template = JsonTemplateAdapter.getTemplateInstance();
+            datagramSocket = new DatagramSocket(new InetSocketAddress(InetAddress.getByName(
+                    template.getNetworking().getUdpBroadcastAddress()), DISCOVERY_PORT));
+            datagramSocket.setBroadcast(true);
+            LOG.info("Escutando na porta {} por tentativas de descoberta.", DISCOVERY_PORT);
+        } catch (Exception e) {
+            ExceptionHandler.unexpected(LOG, e, 155);
         }
     }
 
     @Override
     public void onUpdate() {
         try {
-            final DatagramPacket packet = NetworkUtil.createABufferedPacket(0);
-            datagramSocket.receive(packet);
-            onReceivedPacket(packet);
+            final NetworkMonitorService monitorService = NetworkMonitorService.getMonitor();
+            DatagramPacket bufferedPacket = NetworkUtil.createABufferedPacket(0);
+            datagramSocket.receive(bufferedPacket);
+            int simplifiedAddress = NetworkUtil.getSimplifiedAddress(bufferedPacket.getAddress());
+            ClientMetrics clientMetrics = monitorService.getMetrics(simplifiedAddress);
+            clientMetrics.updateClientMetric(ClientMetricType.UDP_RECEIVED);
+            if (allowUdpResponse(clientMetrics)) {
+                receiveAllowedPacket(bufferedPacket);
+            } else if (NetworkProbeOptions.isDebugSocketEnabled()) {
+                LOG.debug("A flag 'HELLO' foi bloqueada de ser respondida " +
+                        "para o endereço: {}.", bufferedPacket.getAddress().getHostAddress());
+            }
         } catch (Exception e) {
-            ExceptionHandler.unexpected(LOGGER, e, 1);
+            e.printStackTrace();
+            ExceptionHandler.unexpected(LOG, e, 1);
         }
     }
 
-    private void onReceivedPacket(DatagramPacket packet) throws IOException
-    {
-        if (packet.getData()[0] == HELLO_FLAG[0])
+    private void receiveAllowedPacket(DatagramPacket packet) throws IOException {
+        if (packet.getData()[0] == HELLO_FLAG[0]) {
+            if (NetworkProbeOptions.isDebugSocketEnabled())
+                LOG.debug("\"{}\" enviou uma flag de descoberta e será respondido.",
+                        packet.getAddress().getHostAddress());
             datagramSocket.send(new DatagramPacket(HELLO_FLAG, 0, HELLO_FLAG.length,
                     packet.getAddress(), packet.getPort()));
-        else
-            LOGGER.warn("UNKNOWN FLAG RECEIVED");
+        } else {
+            if (NetworkProbeOptions.isDebugSocketEnabled())
+                LOG.debug("\"{}\" enviou um datagrama não reconhecido.",
+                        packet.getAddress().getHostAddress());
+            LOG.warn("UNKNOWN FLAG RECEIVED");
+        }
     }
 
     @Override
@@ -73,6 +85,11 @@ public class NetworkDiscoveryService extends ExecutionWorker {
             if (datagramSocket != null)
                 datagramSocket.close();
         } catch (Exception e) { /* ignore */ }
+    }
+
+    public boolean allowUdpResponse(ClientMetrics clientMetrics) {
+        return clientMetrics.getUdpReceivedCount() < JsonTemplateAdapter.getTemplateInstance()
+                .getNetworking().getUdpRequestThreshold();
     }
 
     public static NetworkDiscoveryService getDiscoveryService() {

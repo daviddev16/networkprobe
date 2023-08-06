@@ -38,20 +38,19 @@ public final class SingletonDirectory {
         Reflections reflections = new Reflections(BASE_SCAN_PACKAGE);
 
         List<Class<?>> singletonClasses = new ArrayList<>(reflections.getTypesAnnotatedWith(Singleton.class));
-        Collections.sort(singletonClasses, EXECUTION_ORDER);
+        singletonClasses.sort(EXECUTION_ORDER);
 
         for (Class<?> dynamicSigletonClass : singletonClasses) {
             Singleton singleton = dynamicSigletonClass.getAnnotation(Singleton.class);
-
             if (singleton.creationType() == SingletonType.INSTANTIATED)
             {
                 LOG.warn("Não é possível utilizar instância dinâmica em uma classe do tipo singleton " +
                         "'INSTANTIATED'. {} será ignorada.", dynamicSigletonClass.getSimpleName());
                 return;
             }
-
             registerDynamicInstance(dynamicSigletonClass, singleton.creationType());
         }
+
     }
 
     public static void registerDynamicInstance(Class<?> objectClass, Object instantiationObject,
@@ -104,13 +103,12 @@ public final class SingletonDirectory {
             return (E) classInfo.getInstance();
 
         else if (classInfo.getSingletonType() == SingletonType.LAZY)
-            return (E) getLazyInstanceInternal(classInfo);
+            return getLazyInstanceInternal(classInfo);
 
         return null;
     }
 
     @Nullable
-    @SuppressWarnings({"unchecked"})
     public static <E> E getSingleOf(Class<E> objectClass){
         try {
             return internalGenericSingleOf(objectClass);
@@ -158,18 +156,17 @@ public final class SingletonDirectory {
         Constructor<?> constructors = objectClass.getConstructors()[0];
 
         if (constructors.getParameterCount() > 0)
-            throw new SingletonException(objectClass, "Não é possível utilizar instânciar um construtor com parâmetros.");
+            throw new SingletonException(objectClass, "Não é possível utilizar instânciar um construtor com parâmetros");
 
         return (T) objectClass.newInstance();
-
     }
 
     private static void addToInfoMap(Class<?> objectClass, SingletonClassInfo classInfo) {
-        if (singletonInfoMap.put(objectClass, classInfo) == null)
+        if (singletonInfoMap.put(objectClass, classInfo) != null) {
             LOG.info("A classe '{}' foi registrada como singleton do tipo '{}'.",
                     objectClass.getName(), classInfo.getSingletonType());
-        else
-            LOG.error("Houve um erro na inserção da classe '{}' no mapa de singletons.",
-                    objectClass.getName());
+            return;
+        }
+        LOG.error("Houve um erro na inserção da classe '{}' no mapa de singletons.", objectClass.getName());
     }
 }
