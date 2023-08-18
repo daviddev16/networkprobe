@@ -1,5 +1,6 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.api.Template;
 import com.networkprobe.core.util.NetworkUtil;
@@ -19,6 +20,9 @@ public final class NetworkExchangeService extends ExecutionWorker {
 
     private ServerSocket serverSocket;
 
+    @ManagedDependency
+    private NetworkMonitorService monitorService;
+
     public NetworkExchangeService()
     {
         super("exchange-service", true, false);
@@ -33,6 +37,7 @@ public final class NetworkExchangeService extends ExecutionWorker {
                     InetAddress.getByName(template.getNetworking().getTcpBindAddress()));
             LOG.info("Escutando na porta {} por requisições de comandos.", SERVER_PORT);
         } catch (Exception e) {
+            e.printStackTrace();
             ExceptionHandler.unexpected(LOG, e, 156);
         }
     }
@@ -40,12 +45,10 @@ public final class NetworkExchangeService extends ExecutionWorker {
     @Override
     public void onUpdate() {
         try {
-            final NetworkMonitorService monitorService = NetworkMonitorService.getMonitor();
             synchronized (serverSocket) {
                 Socket clientSocket = serverSocket.accept();
                 int simplifiedAddress = NetworkUtil.getSimplifiedAddress(clientSocket.getInetAddress());
                 ClientMetrics clientMetrics = monitorService.getMetrics(simplifiedAddress);
-                clientMetrics.updateClientMetric(ClientMetricType.TCP_CONNECTION);
                 if (allowTcpConnection(clientMetrics)) {
                     ClientHandler clientHandler = new ClientHandler(clientSocket);
                     clientHandler.start();
@@ -69,7 +72,7 @@ public final class NetworkExchangeService extends ExecutionWorker {
 
     public boolean allowTcpConnection(ClientMetrics clientMetrics) {
         return clientMetrics.getTcpConnectionCount() < JsonTemplateAdapter.getTemplateInstance()
-                .getNetworking().getUdpRequestThreshold();
+                .getNetworking().getTcpConnectionThreshold();
     }
 
     public static NetworkExchangeService getExchangeService() {

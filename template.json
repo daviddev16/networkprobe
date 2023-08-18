@@ -2,8 +2,8 @@
 	"networking": {
 		"tcp_bind_address": "0.0.0.0",
 		"udp_broadcast_address": "0.0.0.0",
-		"udp_request_threshold": 1000000,
-		"TODO@tcp_connection_threshold": 100,
+		"udp_request_threshold": 2000,
+		"tcp_connection_threshold": 2000,
 		"tcp_socket_backlog": 50,
 		"enable_discovery": true
 	},
@@ -37,14 +37,14 @@
 		{
 			"name": "P10",
 			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
-			"routes": ["default_subnet_route", "bimer_rota_subrede"],
+			"routes": ["any"],
 			"cached_once": false,
 			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK"
 		},
 		{
 			"name": "B101",
 			"response": "{\"database\": \"ALTERDATA (ODBC)\", \"address\": \"10.201.40.111\", \"database_type\": \"SQL Server\"}",
-			"routes": ["bimer_rota_subrede"],
+			"routes": ["any"],
 			"cached_once": true,
 			"#usage": "Esse comando é usado para fazer conexões vindas do sistema Alterdata Bimer liberado apenas para a subrede \"10.201.40.0/24\""
 		},

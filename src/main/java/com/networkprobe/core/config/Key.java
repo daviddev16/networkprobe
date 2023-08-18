@@ -7,6 +7,7 @@ public final class Key {
     public static final String UDP_REQUEST_THRESHOLD = "udp_request_threshold";
     public static final String ENABLE_DISCOVERY = "enable_discovery";
     public static final String TCP_SOCKET_BACKLOG = "tcp_socket_backlog";
+    public static final String TCP_CONNECTION_THRESHOLD = "tcp_connection_threshold";
 
     public static final String NETWORKING = "networking";
     public static final String ROUTES = "routes";

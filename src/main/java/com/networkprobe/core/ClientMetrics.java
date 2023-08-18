@@ -1,25 +1,52 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.api.Template;
-import com.networkprobe.core.util.Validator;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class ClientMetrics {
 
-    private volatile int udpReceivedCount = 0;
-    private volatile int tcpConnectionCount = 0;
+    private Queue<String> requestedCommands = new ArrayDeque<>();
+    private int tcpBlockedConnections = 0;
+    private int udpBlockedConnections = 0;
+    private int tcpConnectionCount = 0;
+    private int udpReceivedCount = 0;
 
     public ClientMetrics() {}
 
-    public void updateClientMetric(ClientMetricType clientMetricType) {
-        Validator.checkIsNotNull(clientMetricType, "clientMetricType");
-        switch (clientMetricType) {
-            case UDP_RECEIVED:
-                udpReceivedCount += 1;
-                break;
-            case TCP_CONNECTION:
-                tcpConnectionCount += 1;
-                break;
+    public synchronized void queueCommandRequest(String command) {
+        if (command != null && !command.isEmpty()) {
+            if (requestedCommands.size() > 3) {
+                requestedCommands.remove();
+            }
+            requestedCommands.add(command);
         }
+    }
+
+    public synchronized void countTcpAcceptedConnection() {
+        tcpConnectionCount += 1;
+    }
+
+    public synchronized void countTcpBlockedConnection() {
+        tcpConnectionCount += 1;
+    }
+
+    public synchronized void countUdpAcceptedConnection() {
+        udpBlockedConnections += 1;
+    }
+    public synchronized void countUdpBlockedConnection() {
+        udpBlockedConnections += 1;
+    }
+
+    public Queue<String> getRequestedCommands() {
+        return requestedCommands;
+    }
+
+    public int getTcpBlockedConnections() {
+        return tcpBlockedConnections;
+    }
+
+    public int getUdpBlockedConnections() {
+        return udpBlockedConnections;
     }
 
     public int getTcpConnectionCount() {

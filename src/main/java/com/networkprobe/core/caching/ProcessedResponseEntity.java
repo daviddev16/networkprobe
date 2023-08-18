@@ -1,6 +1,6 @@
 package com.networkprobe.core.caching;
 
-import com.networkprobe.core.api.Simplexer;
+import com.networkprobe.core.experimental.Simplexer;
 import com.networkprobe.core.ClassMapperHandler;
 
 import java.util.List;

@@ -1,5 +1,6 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.api.ResponseEntity;
 import com.networkprobe.core.api.SocketDataMessageProcessor;
@@ -20,15 +21,18 @@ import java.util.*;
 public class SocketCommandProcessor implements SocketDataMessageProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SocketCommandProcessor.class);
+
+    @ManagedDependency private JsonTemplateAdapter template;
+
     @Override
     public String processSocketMessage(String message, final Socket socket) {
 
-        Template template = JsonTemplateAdapter.getTemplateInstance();
-        Command messagedCommand = commandByMessage(template, message);
-        ResponseEntity<?> responseEntity = messagedCommand.getResponse();
+        Command messagedCommand = template.getCommands().get(message);
 
         if (messagedCommand == null)
             return template.unknownResponse();
+
+        ResponseEntity<?> responseEntity = messagedCommand.getResponse();
 
         if (checkIsClientAllowed(socket.getInetAddress().getAddress(), messagedCommand.getRoutes())) {
             if (NetworkProbeOptions.isDebugSocketEnabled()) {
@@ -63,9 +67,5 @@ public class SocketCommandProcessor implements SocketDataMessageProcessor {
             networkId[i] = (byte) (socketAddress[i] & subnetMask[i]);
         }
         return networkId;
-    }
-
-    private Command commandByMessage(Template template, String message) {
-        return template.getCommands().get(message);
     }
 }

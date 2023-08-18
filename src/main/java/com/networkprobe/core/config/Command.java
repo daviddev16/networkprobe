@@ -55,20 +55,9 @@ public class Command {
         this.cachedOnce = cachedOnce;
     }
 
-    @Override
-    public String toString() {
-        return "Command{" +
-                "name='" + name + '\'' +
-                ", rawResponse='" + response.getRawContent() + '\'' +
-                ", routes=" + routes +
-                ", cachedOnce=" + cachedOnce +
-                '}';
-    }
-
     public static final class Builder {
 
         private final Command command = new Command();
-
         {
             command.setRoutes(new HashSet<>());
         }

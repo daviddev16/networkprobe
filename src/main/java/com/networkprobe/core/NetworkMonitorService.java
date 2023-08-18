@@ -15,7 +15,7 @@ public final class NetworkMonitorService extends ExecutionWorker {
     private static final Logger LOG = LoggerFactory.getLogger(NetworkMonitorService.class);
     private final Map<Integer, ClientMetrics> metrics = Collections.synchronizedMap(new HashMap<>());
     private static NetworkMonitorService monitorServiceInstance;
-    private static final long METRICS_TIMEOUT = 60;
+    private static final long METRICS_TIMEOUT = 1;
 
     public NetworkMonitorService()
     {
@@ -27,7 +27,7 @@ public final class NetworkMonitorService extends ExecutionWorker {
     protected void onUpdate() {
         try {
             Thread.sleep(TimeUnit.SECONDS.toMillis(METRICS_TIMEOUT));
-            metrics.clear();
+            //metrics.clear();
         } catch (InterruptedException e) {
             ExceptionHandler.unexpected(LOG, e, 202);
         }
@@ -40,6 +40,14 @@ public final class NetworkMonitorService extends ExecutionWorker {
             metrics.put(simplifiedAddress, clientMetrics);
         }
         return clientMetrics;
+    }
+
+    public static Map<Integer, ClientMetrics> getAllMetrics() {
+        return getMonitor().getMetrics();
+    }
+
+    public Map<Integer, ClientMetrics> getMetrics() {
+        return metrics;
     }
 
     public static NetworkMonitorService getMonitor() {

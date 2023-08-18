@@ -1,16 +1,21 @@
 package com.networkprobe.core;
 
 
+import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.exception.DependencyException;
 import com.networkprobe.core.exception.SingletonException;
-import com.networkprobe.core.util.Validator;
 import org.jetbrains.annotations.Nullable;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.*;
+
+import static com.networkprobe.core.util.Validator.*;
 
 /**
  *
@@ -40,7 +45,8 @@ public final class SingletonDirectory {
         List<Class<?>> singletonClasses = new ArrayList<>(reflections.getTypesAnnotatedWith(Singleton.class));
         singletonClasses.sort(EXECUTION_ORDER);
 
-        for (Class<?> dynamicSigletonClass : singletonClasses) {
+        for (Class<?> dynamicSigletonClass : singletonClasses)
+        {
             Singleton singleton = dynamicSigletonClass.getAnnotation(Singleton.class);
             if (singleton.creationType() == SingletonType.INSTANTIATED)
             {
@@ -50,14 +56,18 @@ public final class SingletonDirectory {
             }
             registerDynamicInstance(dynamicSigletonClass, singleton.creationType());
         }
-
+        for (SingletonClassInfo singletonClassInfo : singletonInfoMap.values())
+        {
+            if (singletonClassInfo.getSingletonType() == SingletonType.DYNAMIC)
+                internalFieldInjection(singletonClassInfo.getInstance());
+        }
     }
 
     public static void registerDynamicInstance(Class<?> objectClass, Object instantiationObject,
-                                               SingletonType singletonType) throws InstantiationException, IllegalAccessException {
-
-        Validator.checkIsNotNull(objectClass, "objectClass");
-        Validator.checkIsNotNull(singletonType, "singletonType");
+                                               SingletonType singletonType)
+            throws InstantiationException, IllegalAccessException {
+        checkIsNotNull(objectClass, "objectClass");
+        checkIsNotNull(singletonType, "singletonType");
 
         if (containsInstanceInfo(objectClass))
             throw new SingletonException(objectClass, "essa classe já foi registrada no mapa de singletons");
@@ -92,11 +102,44 @@ public final class SingletonDirectory {
         registerDynamicInstance(objectClass, null, singletonType);
     }
 
+    public static void internalFieldInjection(Object instantiationObject) {
+        try {
+            Class<?> objectClass = instantiationObject.getClass();
+            for (Field dependencyField : objectClass.getDeclaredFields()) {
+
+                if (!dependencyField.getDeclaringClass().isAssignableFrom(objectClass) ||
+                        dependencyField.getAnnotation(ManagedDependency.class) == null)
+                    continue;
+
+                Object classifiedObject = getSingleOf(dependencyField.getType());
+                internalPerformFieldInjection(instantiationObject, dependencyField, classifiedObject);
+            }
+        }
+        catch (Exception e) {
+            throw new DependencyException("Houve um problema na injeção de dependências.", e);
+        }
+    }
+
+    private static void internalPerformFieldInjection(Object instantiationObject, Field dependencyField,
+                                               Object valueObject) throws InvalidClassException, IllegalAccessException {
+        checkIsNotNull(valueObject, "valueObject");
+
+        Class<?> valueObjectType = valueObject.getClass();
+
+        if (!dependencyField.getType().isAssignableFrom(valueObjectType))
+            throw new InvalidClassException("Uma instância do tipo \"" + valueObjectType.getSimpleName() +
+                    "\" não pode ser atribuida a uma variável do tipo \"" + valueObjectType.getSimpleName() + "\".");
+
+        dependencyField.setAccessible(true);
+        dependencyField.set(instantiationObject, valueObject);
+    }
+
     @SuppressWarnings({"unchecked"})
     private static <E> E internalGenericSingleOf(Class<E> objectClass) throws InstantiationException, IllegalAccessException {
 
         SingletonClassInfo classInfo = singletonInfoMap.getOrDefault(objectClass, null);
-        if (classInfo == null) return null;
+        if (classInfo == null)
+            throw new NullPointerException("Não há instância registada do tipo \"" + objectClass.getName() + "\".");
 
         /* não deveria retornar nulo já que é um instância registrada diretamente no 'registerDynamicInstance'. */
         if (classInfo.getSingletonType() == SingletonType.INSTANTIATED || classInfo.getSingletonType() == SingletonType.DYNAMIC)
@@ -117,14 +160,16 @@ public final class SingletonDirectory {
         }
     }
 
+    /**
+     * Responsável pelo comportamento de classe Singleton.
+     **/
     public static void denyInstantiation(Class<?> objectClass) {
-        Validator.checkIsNotNull(objectClass, "objectClass");
         if (containsInstanceInfo(objectClass))
             throw new SingletonException(objectClass, "tentativa de instância usando construtor não permitida");
     }
 
     public static void denyInstantiation(Object object) {
-        denyInstantiation(Validator.checkIsNotNull(object.getClass(), "object"));
+        denyInstantiation(checkIsNotNull(object, "object").getClass());
     }
 
     private static boolean containsInstanceInfo(Class<?> objectClass) {
@@ -137,9 +182,10 @@ public final class SingletonDirectory {
             throws InstantiationException, IllegalAccessException {
 
         Object objectInstance = classInfo.getInstance();
-
-        if (objectInstance == null)
+        if (objectInstance == null) {
             objectInstance = newDynamicInstanceInternal(classInfo.getObjectClass());
+            internalFieldInjection(objectInstance);
+        }
 
         return (T) objectInstance;
     }
@@ -148,7 +194,7 @@ public final class SingletonDirectory {
     private static <T> T newDynamicInstanceInternal(Class<?> objectClass)
             throws SingletonException, InstantiationException, IllegalAccessException {
 
-        Validator.checkIsNotNull(objectClass, "objectClass");
+        checkIsNotNull(objectClass, "objectClass");
 
         if (objectClass.getConstructors().length == 0)
             throw new SingletonException(objectClass, "Não há construtores nessa classe");
@@ -162,7 +208,7 @@ public final class SingletonDirectory {
     }
 
     private static void addToInfoMap(Class<?> objectClass, SingletonClassInfo classInfo) {
-        if (singletonInfoMap.put(objectClass, classInfo) != null) {
+        if (singletonInfoMap.put(objectClass, classInfo) == null) {
             LOG.info("A classe '{}' foi registrada como singleton do tipo '{}'.",
                     objectClass.getName(), classInfo.getSingletonType());
             return;

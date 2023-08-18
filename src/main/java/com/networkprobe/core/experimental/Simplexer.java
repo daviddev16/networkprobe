@@ -1,5 +1,6 @@
-package com.networkprobe.core.api;
+package com.networkprobe.core.experimental;
 
+import com.networkprobe.core.annotation.Obsolete;
 import com.networkprobe.core.util.Validator;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import static com.networkprobe.core.util.Validator.*;
  *  Simplexer foi desenvolvido por mim há um tempo atrás
  *  apenas para testes.
  *  */
+@Obsolete(reason = "Será substituido pela arquitetura de Json Procedures.")
 public class Simplexer {
 
     public static final char CHR_DOLLAR = '$';

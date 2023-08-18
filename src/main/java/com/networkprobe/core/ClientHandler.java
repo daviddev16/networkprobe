@@ -38,6 +38,7 @@ public class ClientHandler extends ExecutionWorker {
                 outputWriter.println(response);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             ExceptionHandler.unexpected(LOG, e, 190);
         }
     }

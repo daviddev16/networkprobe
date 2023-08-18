@@ -8,18 +8,28 @@ public class Networking implements Cloneable {
     private String udpBroadcastAddress;
     private int udpRequestThreshold;
     private int tcpSocketBacklog;
+    private int tcpConnectionThreshold;
     private boolean enableDiscovery;
 
     private Networking(String tcpBindAddress, String udpBroadcastAddress, int udpRequestThreshold,
-                       int tcpSocketBacklog, boolean enableDiscovery) {
+                       int tcpSocketBacklog, boolean enableDiscovery, int tcpConnectionThreshold) {
         this.tcpBindAddress = tcpBindAddress;
         this.udpBroadcastAddress = udpBroadcastAddress;
         this.udpRequestThreshold = udpRequestThreshold;
         this.tcpSocketBacklog = tcpSocketBacklog;
         this.enableDiscovery = enableDiscovery;
+        this.tcpConnectionThreshold = tcpConnectionThreshold;
     }
 
     private Networking() {}
+
+    public int getTcpConnectionThreshold() {
+        return tcpConnectionThreshold;
+    }
+
+    public void setTcpConnectionThreshold(int tcpConnectionThreshold) {
+        this.tcpConnectionThreshold = tcpConnectionThreshold;
+    }
 
     public String getTcpBindAddress() {
         return tcpBindAddress;
@@ -88,6 +98,13 @@ public class Networking implements Cloneable {
             checkIsPositive(tcpSocketBacklog, "tcpSocketBacklog");
             checkIsLowerThan(tcpSocketBacklog, 50, "tcpSocketBacklog");
             networking.setTcpSocketBacklog(tcpSocketBacklog);
+            return this;
+        }
+
+        public Builder tcpConnectionThreshold(int tcpConnectionThreshold) {
+            checkIsPositive(tcpConnectionThreshold, "tcpConnectionThreshold");
+            checkIsLowerThan(tcpConnectionThreshold, 50, "tcpConnectionThreshold");
+            networking.setTcpConnectionThreshold(tcpConnectionThreshold);
             return this;
         }
 

@@ -49,7 +49,6 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
 
             checkIsReadable(jsonFile, "jsonFile");
             checkIsNotNull(responseEntityFactory, "responseEntityFactory");
-
             JSONObject jsonObject = new JSONObject(IOUtil.readFile(jsonFile));
 
             LOG.info("Carregando e validando informações do template json.");
@@ -60,6 +59,7 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
 
             commands = Collections.synchronizedMap(new HashMap<>());
             loadAllCommands(jsonObject, responseEntityFactory);
+            createMetricsCommand();
             verifyExistsInternalCommands();
 
             LOG.info("Template carregado com sucesso.");
@@ -82,6 +82,8 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
         }
     }
 
+
+
     private Networking loadNetworkingSettings(final JSONObject jsonObject)
             throws JSONException {
 
@@ -92,6 +94,7 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
                 .enableDiscovery(networkingJsonObject.getBoolean(Key.ENABLE_DISCOVERY))
                 .tcpSocketBacklog(networkingJsonObject.getInt(Key.TCP_SOCKET_BACKLOG))
                 .udpRequestThreshold(networkingJsonObject.getInt(Key.UDP_REQUEST_THRESHOLD))
+                .tcpConnectionThreshold(networkingJsonObject.getInt(Key.TCP_CONNECTION_THRESHOLD))
                 .get();
     }
 
@@ -199,6 +202,16 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
 
     public static FileTemplateAdapter getTemplateInstance() {
         return SingletonDirectory.getSingleOf(JsonTemplateAdapter.class);
+    }
+
+    private void createMetricsCommand() {
+        String metricCmdName = "np:metrics";
+        commands.put(metricCmdName, new Command.Builder()
+                .response(new MetricsResponseEntity())
+                .network(CidrNotation.ALL)
+                .name(metricCmdName)
+                .cachedOnce(true)
+                .get());
     }
 
     @Override
