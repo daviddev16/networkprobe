@@ -33,18 +33,19 @@ public interface Template {
     Map<String, Command> getCommands();
 
     default String unauthorizedResponse() {
-        return defaultInternalResponse(Key.CMD_UNAUTHORIZED);
+        return queryResponse(Key.CMD_UNAUTHORIZED);
     }
 
     default String unknownResponse() {
-        return defaultInternalResponse(Key.CMD_UNKNOWN);
+        return queryResponse(Key.CMD_UNKNOWN);
     }
 
-    default String defaultInternalResponse(String key) {
-        return (String) getCommands()
+    default String queryResponse(String key) {
+        return getCommands()
                 .get(key)
                 .getResponse()
-                .getContent();
+                .getContent()
+                .toString();
     }
 
 }

@@ -5,6 +5,7 @@ import com.networkprobe.core.entity.ResponseEntity;
 import com.networkprobe.core.caching.ProcessedResponseEntity;
 import com.networkprobe.core.entity.StaticResponseEntity;
 import com.networkprobe.core.experimental.Simplexer;
+import com.networkprobe.core.factory.ResponseEntityFactory;
 
 /**
  *  CommandResponseFactory é uma implementação do ResponseEntityFactory, que  é responsável

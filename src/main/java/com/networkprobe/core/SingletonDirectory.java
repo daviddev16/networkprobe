@@ -23,6 +23,9 @@ import static com.networkprobe.core.util.Validator.*;
  * construtor. Os tipos dinâmicos em {@link SingletonType} são 'LAZY' e 'DYNAMIC', que não são objetos criados
  * através do construtor usando a keyword '{@code new ...()}'.
  *
+ * Atualmente o SingletonDirectory faz mais do que classificar classes como Singleton. A classe gerência instâncias
+ * não-singleton e injeção de dependências através de reflexões.
+ *
  * @see SingletonType
  *
  */
@@ -30,7 +33,7 @@ public final class SingletonDirectory {
 
     private static final String BASE_SCAN_PACKAGE = "com.networkprobe";
     private static final Logger LOG = LoggerFactory.getLogger(SingletonDirectory.class);
-    private static final Map<Class<?>, SingletonClassInfo> singletonInfoMap = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<Class<?>, SingletonClassInfo> singletonInfoMap = new HashMap<>();
     private static final Comparator<Class<?>> EXECUTION_ORDER = (o1, o2) ->
     {
         Singleton singletonClass1 = o1.getAnnotation(Singleton.class);
@@ -102,7 +105,7 @@ public final class SingletonDirectory {
         registerDynamicInstance(objectClass, null, singletonType);
     }
 
-    public static void internalFieldInjection(Object instantiationObject) {
+    private static void internalFieldInjection(Object instantiationObject) {
         try {
             Class<?> objectClass = instantiationObject.getClass();
             for (Field dependencyField : objectClass.getDeclaredFields()) {
@@ -131,7 +134,8 @@ public final class SingletonDirectory {
                     "\" não pode ser atribuida a uma variável do tipo \"" + valueObjectType.getSimpleName() + "\".");
 
         dependencyField.setAccessible(true);
-        dependencyField.set(instantiationObject, valueObject);
+        if (dependencyField.get(instantiationObject) == null)
+            dependencyField.set(instantiationObject, valueObject);
     }
 
     @SuppressWarnings({"unchecked"})

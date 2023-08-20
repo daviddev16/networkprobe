@@ -1,7 +1,5 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.util.IOUtil;
-import com.networkprobe.core.util.NetworkUtil;
 import com.networkprobe.core.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +19,19 @@ public class ClientHandler extends ExecutionWorker {
     private final PrintWriter outputWriter;
     private final Scanner inputScanner;
 
+    private final SocketDataMessageProcessor messageProcessor = SingletonDirectory.getSingleOf(SocketCommandProcessor.class);
+
     public ClientHandler(Socket clientSocket) throws IOException {
         super("client-worker" + ID.incrementAndGet(), false, false);
         this.outputWriter = new PrintWriter(clientSocket.getOutputStream(), true);
         this.inputScanner = new Scanner(clientSocket.getInputStream());
         this.clientSocket = clientSocket;
+        GlobalMetrics.updatTcpMetric();
     }
 
     @Override
     public void onBegin() {
         try {
-            SocketDataMessageProcessor messageProcessor = SingletonDirectory.getSingleOf(SocketCommandProcessor.class);
             while (inputScanner.hasNextLine()) {
                 String receivedContent = inputScanner.nextLine();
                 String response = messageProcessor.processSocketMessage(receivedContent, clientSocket);

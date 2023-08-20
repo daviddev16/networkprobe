@@ -1,6 +1,6 @@
 package com.networkprobe.core.config;
 
-import com.networkprobe.core.util.NetworkUtil;
+import com.networkprobe.core.util.Utility;
 
 public class CidrNotation {
 
@@ -11,8 +11,8 @@ public class CidrNotation {
     private final byte[] subnetMask;
 
     public CidrNotation(String network, String subnetMask) {
-        this.network = NetworkUtil.convertStringToByteArray(network);
-        this.subnetMask = NetworkUtil.convertStringToByteArray(subnetMask);
+        this.network = Utility.convertStringToByteArray(network);
+        this.subnetMask = Utility.convertStringToByteArray(subnetMask);
     }
 
     public CidrNotation(byte[] network, byte[] subnetMask) {
@@ -30,7 +30,7 @@ public class CidrNotation {
 
     @Override
     public String toString() {
-        return NetworkUtil.convertByteArrayToString(network) + "/" + NetworkUtil.convertMaskToPrefix
-                (NetworkUtil.convertByteArrayToString(subnetMask));
+        return Utility.convertByteArrayToString(network) + "/" + Utility.convertMaskToPrefix
+                (Utility.convertByteArrayToString(subnetMask));
     }
 }

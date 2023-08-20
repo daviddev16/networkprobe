@@ -1,4 +1,4 @@
-package com.networkprobe.core;
+package com.networkprobe.core.factory;
 
 import com.networkprobe.core.caching.*;
 import com.networkprobe.core.entity.ResponseEntity;

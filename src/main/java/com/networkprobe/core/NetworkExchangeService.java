@@ -2,7 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.util.NetworkUtil;
+import com.networkprobe.core.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +46,12 @@ public final class NetworkExchangeService extends ExecutionWorker {
             synchronized (serverSocket) {
 
                 Socket clientSocket = serverSocket.accept();
-                int addressIntegerValue = NetworkUtil.getValueFromAddress(clientSocket.getInetAddress());
+                int addressIntegerValue = Utility.getValueFromAddress(clientSocket.getInetAddress());
                 ClientMetrics clientMetrics = monitorService.getMetrics(addressIntegerValue);
 
                 if (allowTcpConnection(clientMetrics)) {
                     ClientHandler clientHandler = new ClientHandler(clientSocket);
+                    clientMetrics.countTcpAcceptedConnection();
                     clientHandler.start();
                 } else if (NetworkProbeOptions.isDebugSocketEnabled()) {
                     LOG.debug("'{}' ultrapassou o limite de conexões configurado.", clientSocket

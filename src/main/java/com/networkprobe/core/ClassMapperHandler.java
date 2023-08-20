@@ -25,8 +25,8 @@ import static java.lang.String.*;
 public final class ClassMapperHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClassMapperHandler.class);
-    private final Map<String, MethodInfo> methods = Collections.synchronizedMap(new HashMap<>());
-    private final Map<Class<?>, Object> handlerInstances = new HashMap<>();
+    private final Map<Class<?>, Object> instancesMap = new HashMap<>();
+    private final Map<String, Method> methodsMap = new HashMap<>();
     private static ClassMapperHandler classMapperInstance;
 
     public static final String NONE = "<<?>>";
@@ -42,61 +42,55 @@ public final class ClassMapperHandler {
         checkIsNotNull(instance, "instance");
         Class<?> clazz = instance.getClass();
 
-        if (getHandlerInstances().containsKey(clazz))
+        if (getInstances().containsKey(clazz))
             throw new InstanceAlreadyExistsException(format("Uma instância de %s já foi registrada.", clazz));
 
         else if (!isClassAddressable(clazz))
             throw new IllegalAccessException(format("Não é possível endereçar a classe \"%s\" por que não " +
                     "contém a anotação de endereçamento \"%s\".", clazz.getName(), AddressAsInventory.class.getName()));
 
-        getHandlerInstances().put(clazz, instance);
+        getInstances().put(clazz, instance);
         extractAllMethods(clazz);
     }
 
     private void extractAllMethods(Class<?> clazz) {
         for (Method method : clazz.getDeclaredMethods()) {
-            if (isMethodAllowed(method))
-                getMethods().put(method.getName(), new MethodInfo(method));
+            if (isMethodAllowed(method)) {
+                getMethods().put(method.getName(), method);
+            }
         }
     }
 
     public String execute(String methodName, List<String> arguments) throws ExecutionFailedException {
         checkIsNotNull(methodName, "methodName");
         checkIsNotNull(arguments, "arguments");
-
-        MethodInfo methodInfo = getMethods().get(methodName);
+        Method method = getMethods().get(methodName);
         try {
-            if (methodInfo == null)
+            if (method == null) {
                 throw new NullPointerException(format("O método \"%s\" não existe.", methodName));
-
-            Method originalMethod = methodInfo.getMethod();
-            Object value = invokeMethod(originalMethod, convertArgumentsToTypes(originalMethod, arguments));
+            }
+            Object value = invokeMethod(method, convertArgumentsToTypes(method, arguments));
             return value == null ? NONE : value.toString();
         } catch (Exception e) {
-            handleMethodInvocationExceptions(methodInfo, e);
+            handleMethodInvocationExceptions(method, e);
         }
         return null;
     }
 
-    private void handleMethodInvocationExceptions(MethodInfo methodInfo,
-                                                        Exception exception) throws ExecutionFailedException {
+    private void handleMethodInvocationExceptions(Method method,
+                                                  Exception exception) throws ExecutionFailedException {
         String message;
-
         if (exception instanceof InvocationTargetException)
             message = format("Houve um erro interno na execução da função \"%s\". Verifique os " +
-                    "argumentos da função no arquivo de configuração.", methodInfo.getMethod().getName());
-
+                    "argumentos da função no arquivo de configuração.", method.getName());
         else if (exception instanceof IllegalAccessException)
-            message = format("A função \"%s\" é inacessível.", methodInfo.getMethod().getName());
-
+            message = format("A função \"%s\" é inacessível.", method.getName());
         else if (exception instanceof IllegalArgumentException)
-            message = String.format("Os argumentos informados na função \"%s\" são inválidos. " +
-                            "Ordenação de tipos correta: %s. Verifique os argumentos da função no arquivo de configuração.",
-                    methodInfo.getMethod().getName(), convertParametersToStrings(methodInfo.getMethod()));
-
-        else if (methodInfo == null)
+            message = String.format("Os argumentos informados na função \"%s\" são inválidos. Ordenação de " +
+                            "tipos correta: %s. Verifique os argumentos da função no arquivo de configuração.",
+                    method.getName(), convertParametersToStrings(method));
+        else if (method == null)
             message = "Um método inexistente foi informado";
-
         else
             message = exception.getMessage();
 
@@ -107,7 +101,7 @@ public final class ClassMapperHandler {
     private Object invokeMethod(Method method, List<Object> args) throws InvocationTargetException, IllegalAccessException {
         checkIsNotNull(method, "method");
         Class<?> methodType = method.getDeclaringClass();
-        Object instanceOfMethod = getHandlerInstances().get(methodType);
+        Object instanceOfMethod = getInstances().get(methodType);
         Object[] arguments = args.toArray(new Object[args.size()]);
         method.setAccessible(true);
         return method.invoke(instanceOfMethod, arguments);
@@ -132,7 +126,6 @@ public final class ClassMapperHandler {
 
     private Object convertStringToType(Class<?> clazz, String value) {
         checkIsNullOrEmpty(value, "value");
-
         if(Boolean.class == clazz || boolean.class == clazz)
             return Boolean.parseBoolean(value);
         else if(Byte.class == clazz || byte.class == clazz)
@@ -147,7 +140,6 @@ public final class ClassMapperHandler {
             return Float.parseFloat(value);
         else if(Double.class == clazz || double.class == clazz)
             return Double.parseDouble(value);
-
         return value;
     }
 
@@ -169,16 +161,17 @@ public final class ClassMapperHandler {
                 method.getAnnotation(Internal.class) == null;
     }
 
-    public Map<String, MethodInfo> getMethods() {
-        return methods;
+    public Map<String, Method> getMethods() {
+        return methodsMap;
     }
 
-    public Map<Class<?>, Object> getHandlerInstances() {
-        return handlerInstances;
+    public Map<Class<?>, Object> getInstances() {
+        return instancesMap;
     }
 
     public static ClassMapperHandler getInstance() {
         return (classMapperInstance != null) ? classMapperInstance :
-                (classMapperInstance = SingletonDirectory.getSingleOf(ClassMapperHandler.class));
+                (classMapperInstance = SingletonDirectory
+                        .getSingleOf(ClassMapperHandler.class));
     }
 }

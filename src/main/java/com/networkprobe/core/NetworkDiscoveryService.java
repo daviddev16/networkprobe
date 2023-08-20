@@ -2,7 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.util.NetworkUtil;
+import com.networkprobe.core.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +22,11 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     public static final byte[] HELLO_FLAG = "H".getBytes(StandardCharsets.UTF_8);
     public static final int DISCOVERY_PORT = 14476;
 
-    @ManagedDependency private Template template;
-    @ManagedDependency private NetworkMonitorService monitorService;
+    @ManagedDependency
+    private Template template;
+
+    @ManagedDependency
+    private NetworkMonitorService monitorService;
 
     private DatagramSocket datagramSocket;
 
@@ -48,14 +51,17 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     @Override
     public void onUpdate() {
         try {
-            DatagramPacket bufferedPacket = NetworkUtil.createABufferedPacket(0);
+            DatagramPacket bufferedPacket = Utility.createABufferedPacket(0);
             datagramSocket.receive(bufferedPacket);
+            GlobalMetrics.updatUdpMetric();
 
-            int addressIntegerValue = NetworkUtil.getValueFromAddress(bufferedPacket.getAddress());
+            int addressIntegerValue = Utility.getValueFromAddress(bufferedPacket.getAddress());
             ClientMetrics clientMetrics = monitorService.getMetrics(addressIntegerValue);
 
-            if (clientMetrics.getUdpReceivedCount() < template.getNetworking().getUdpRequestThreshold())
+            if (clientMetrics.getUdpConnectionCount() < template.getNetworking().getUdpRequestThreshold()) {
                 sendHelloToClient(bufferedPacket);
+                clientMetrics.countUdpAcceptedConnection();
+            }
 
             else if (NetworkProbeOptions.isDebugSocketEnabled()) {
                 LOG.debug("A flag 'HELLO' foi bloqueada de ser respondida " +
