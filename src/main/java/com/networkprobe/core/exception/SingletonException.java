@@ -8,6 +8,7 @@ public final class SingletonException extends RuntimeException {
     }
 
     public SingletonException(String message, Exception exception) {
-        super(String.format("%s { INNER EXCEPTION: %s } ", message, exception));
+        super(message);
+        addSuppressed(exception);
     }
 }

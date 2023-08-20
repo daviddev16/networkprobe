@@ -13,12 +13,5 @@ public final class IOUtil {
         return String.join("\n", Files.readAllLines(Paths.get(file.toURI()))).trim();
     }
 
-    public static void closeQuietly(Closeable... closeables) {
-        try {
-            for (Closeable closeable : closeables) {
-                if (closeable != null)
-                    closeable.close();
-            }
-        } catch (Exception ignored) {}
-    }
+
 }

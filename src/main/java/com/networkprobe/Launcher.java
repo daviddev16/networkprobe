@@ -1,7 +1,7 @@
 package com.networkprobe;
 
 import com.networkprobe.core.*;
-import com.networkprobe.core.api.FileTemplateAdapter;
+import com.networkprobe.core.FileTemplateAdapter;
 import com.networkprobe.core.CommandResponseFactory;
 import com.networkprobe.core.UsableNetworkDataInventory;
 import com.networkprobe.core.NetworkServicesFacade;

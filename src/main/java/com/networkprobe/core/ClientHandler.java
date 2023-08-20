@@ -1,8 +1,8 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.api.SocketDataMessageProcessor;
 import com.networkprobe.core.util.IOUtil;
 import com.networkprobe.core.util.NetworkUtil;
+import com.networkprobe.core.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +44,9 @@ public class ClientHandler extends ExecutionWorker {
     }
 
     @Override
-    public void onStop() {
-        IOUtil.closeQuietly(inputScanner, outputWriter);
-        NetworkUtil.closeQuietly(clientSocket);
+    public void onStop()
+    {
+        Utility.closeQuietly(inputScanner, outputWriter, clientSocket);
     }
 
 }

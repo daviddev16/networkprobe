@@ -1,6 +1,4 @@
-package com.networkprobe.core.caching;
-
-import com.networkprobe.core.api.ResponseEntity;
+package com.networkprobe.core.entity;
 
 /** Classe de instância padrão para ResponseEntity */
 public abstract class DefaultResponseEntity<T> implements ResponseEntity<T> {

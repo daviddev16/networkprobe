@@ -22,7 +22,7 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     public static final byte[] HELLO_FLAG = "H".getBytes(StandardCharsets.UTF_8);
     public static final int DISCOVERY_PORT = 14476;
 
-    @ManagedDependency private JsonTemplateAdapter template;
+    @ManagedDependency private Template template;
     @ManagedDependency private NetworkMonitorService monitorService;
 
     private DatagramSocket datagramSocket;
@@ -51,8 +51,8 @@ public class NetworkDiscoveryService extends ExecutionWorker {
             DatagramPacket bufferedPacket = NetworkUtil.createABufferedPacket(0);
             datagramSocket.receive(bufferedPacket);
 
-            int simplifiedAddress = NetworkUtil.getSimplifiedAddress(bufferedPacket.getAddress());
-            ClientMetrics clientMetrics = monitorService.getMetrics(simplifiedAddress);
+            int addressIntegerValue = NetworkUtil.getValueFromAddress(bufferedPacket.getAddress());
+            ClientMetrics clientMetrics = monitorService.getMetrics(addressIntegerValue);
 
             if (clientMetrics.getUdpReceivedCount() < template.getNetworking().getUdpRequestThreshold())
                 sendHelloToClient(bufferedPacket);

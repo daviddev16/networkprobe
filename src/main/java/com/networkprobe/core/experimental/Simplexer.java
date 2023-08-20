@@ -24,11 +24,11 @@ public class Simplexer {
     public static final char CHR_START = '{';
     public static final char CHR_SEPARATOR = '|';
 
-    private final List<StringFunctionToken> functionTokens = new ArrayList<>();
+    private final List<FunctionToken> functionTokens = new ArrayList<>();
     private final StringBuilder buffer = new StringBuilder();
     private final String text;
 
-    private StringFunctionToken currentToken;
+    private FunctionToken currentToken;
     private int currentPos = 0;
 
     public Simplexer(String text) {
@@ -40,83 +40,55 @@ public class Simplexer {
             return;
         while (currentPos < text.length()) {
             if (checkValue(currentPos, CHR_DOLLAR)) {
-                processDollarCharacter();
+                if (currentToken != null) {
+                    throw new LexerException("Uma função foi escaneada sem o encerramento da função anterior." +
+                            " Posição da função: " + currentPos);
+                }
+                int nextCharIndex = currentPos + 1;
+                if (checkValue(nextCharIndex, CHR_START)) {
+                    currentToken = new FunctionToken();
+                    currentToken.setStartPosition(currentPos);
+                }
             } else if (checkValue(currentPos, CHR_END)) {
-                processEndCharacter();
+                if (currentToken != null) {
+                    String value = buffer.toString();
+                    if (!value.isEmpty()) {
+                        currentToken.getArguments().add(value);
+                    }
+                    currentToken.setEndPosition(currentPos);
+                    getFunctionTokens().add(currentToken);
+                    buffer.delete(0, buffer.length());
+                    currentToken = null;
+                }
             } else if (checkValue(currentPos, CHR_SEPARATOR)) {
-                processSeparator();
-            } else if (skipEqualsTo(CHR_DOLLAR, CHR_START, CHR_END)){
-                processLetter();
+                String value = buffer.toString();
+                if (!value.isEmpty()) {
+                    if (currentToken.getMethodName() == null) {
+                        currentToken.setMethodName(value);
+                    } else {
+                        currentToken.getArguments().add(value);
+                    }
+                    buffer.delete(0, buffer.length());
+                }
+            } else if (!isCurrentCharacterEqualsTo(CHR_DOLLAR, CHR_START, CHR_END)) {
+                if (currentToken != null && !checkValue(currentPos, '|'))
+                    buffer.append(text.charAt(currentPos));
             }
             currentPos++;
         }
     }
 
-    private void processSeparator() {
-        String value = buffer.toString();
-        if (value.isEmpty()) {
-            return;
+    private boolean isCurrentCharacterEqualsTo(char... characters) {
+        for (char c : characters) {
+            if (text.charAt(currentPos) == c)
+                return true;
         }
-        if (currentToken.getMethodName() == null) {
-            currentToken.setMethodName(value);
-        } else {
-            currentToken.getArguments().add(value);
-        }
-        clearStringBuffer();
-    }
-
-    private void processLetter() {
-        if (currentToken != null && !checkValue(currentPos, '|'))
-            appendToBuffer(text.charAt(currentPos));
-    }
-
-    private void processEndCharacter() {
-        if (currentToken != null) {
-            String value = buffer.toString();
-            if (!value.isEmpty()) {
-                currentToken.getArguments().add(value);
-            }
-            currentToken.setEndPosition(currentPos);
-            getFunctionTokens().add(currentToken);
-            clearStringBuffer();
-            currentToken = null;
-        }
-    }
-
-    private void processDollarCharacter() {
-        if (currentToken != null) {
-            throw new LexerException("Uma função foi escaneada sem o encerramento da função anterior." +
-                    " Posição da função: " + currentPos);
-        }
-        int nextCharIndex = currentPos + 1;
-        if (checkValue(nextCharIndex, CHR_START)) {
-            currentToken = new StringFunctionToken();
-            currentToken.setStartPosition(currentPos);
-        }
+        return false;
     }
 
     private boolean checkValue(int pos, char chr) {
         int safeIndex = getSafeIndexValue(pos);
-        if (safeIndex == -1)
-            return false;
-        return text.charAt(safeIndex) == chr;
-    }
-
-    private void appendToBuffer(char character) {
-        buffer.append(character);
-    }
-
-    private void clearStringBuffer() {
-        buffer.delete(0, buffer.length());
-    }
-
-    private boolean skipEqualsTo(char... chrs) {
-        for (char chr : chrs) {
-            if (chr == text.charAt(currentPos)) {
-                return false;
-            }
-        }
-        return true;
+        return safeIndex != -1 && text.charAt(safeIndex) == chr;
     }
 
     private int getSafeIndexValue(int pos) {
@@ -125,11 +97,11 @@ public class Simplexer {
         return pos;
     }
 
-    public List<StringFunctionToken> getFunctionTokens() {
+    public List<FunctionToken> getFunctionTokens() {
         return functionTokens;
     }
 
-    public static String overlap(String original, StringFunctionToken token, String desired) {
+    public static String overlap(String original, FunctionToken token, String desired) {
         checkIsNullOrEmpty(original, "original");
         checkIsNotNull(token, "token");
         checkIsNullOrEmpty(desired, "desired");
@@ -141,7 +113,7 @@ public class Simplexer {
                 content.indexOf(CHR_START) < content.indexOf(CHR_END);
     }
 
-    public static final class StringFunctionToken {
+    public static final class FunctionToken {
 
         private final List<String> arguments = new ArrayList<>();
 
@@ -149,7 +121,7 @@ public class Simplexer {
         private int startPosition;
         private int endPosition;
 
-        public StringFunctionToken() {}
+        public FunctionToken() {}
 
         public String getMethodName() {
             return methodName;
@@ -181,7 +153,7 @@ public class Simplexer {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            StringFunctionToken that = (StringFunctionToken) o;
+            FunctionToken that = (FunctionToken) o;
             return that.toRawValue().equals(toRawValue());
         }
 
@@ -192,7 +164,7 @@ public class Simplexer {
 
         @Override
         public String toString() {
-            return "StringFunctionToken{" +
+            return "FunctionToken{" +
                     "methodName='" + methodName + '\'' +
                     ", arguments=" + arguments +
                     ", startPosition=" + startPosition +
@@ -205,4 +177,5 @@ public class Simplexer {
     {
         public LexerException(String message) { super(message); }
     }
+    
 }
