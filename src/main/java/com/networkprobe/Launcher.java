@@ -1,7 +1,7 @@
 package com.networkprobe;
 
 import com.networkprobe.core.*;
-import com.networkprobe.core.FileTemplateAdapter;
+import com.networkprobe.core.adapter.FileTemplateAdapter;
 import com.networkprobe.core.CommandResponseFactory;
 import com.networkprobe.core.UsableNetworkDataInventory;
 import com.networkprobe.core.NetworkServicesFacade;
@@ -40,6 +40,12 @@ public class Launcher {
         templateAdapter.load(new File("./template.json"), CommandResponseFactory.getFactory());
 
         NetworkServicesFacade.getNetworkServices().launchAllServices();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            { setName("shutdown-hook-thread"); }
+            @Override
+            public void run() { GlobalMetrics.stopMetrics(); }
+        });
 
     }
 

@@ -75,8 +75,7 @@ public class Validator {
     }
 
     public static @NotNull String sanitize(String str) {
-        checkIsNotNull(str, "str");
-        return str
+        return checkIsNotNull(str, "str")
                 .replaceAll("[^a-zA-Z0-9_]", "")
                 .replaceAll("\\s+", "");
     }

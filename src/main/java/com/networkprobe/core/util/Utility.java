@@ -1,8 +1,24 @@
 package com.networkprobe.core.util;
 
+import com.networkprobe.core.config.CidrNotation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.StringJoiner;
+
+import static com.networkprobe.core.util.Validator.checkIsNotNull;
 
 public class Utility {
+
+    public static final int MIN_BUFFER_SIZE = 2;
 
     public static void closeQuietly(Closeable... closeables) {
         try {
@@ -11,6 +27,102 @@ public class Utility {
                     closeable.close();
             }
         } catch (Exception ignored) {}
+    }
+
+    public static @NotNull String readFile(File file) throws IOException {
+        Validator.checkIsReadable(file, file.getName());
+        return String.join("\n", Files.readAllLines(Paths.get(file.toURI()))).trim();
+    }
+
+    public static DatagramPacket createABufferedPacket(int length) {
+        byte[] buffer = new byte[ (length < MIN_BUFFER_SIZE) ? MIN_BUFFER_SIZE : length ];
+        return new DatagramPacket(buffer, 0, buffer.length);
+    }
+
+    public static InetAddress getInetAddress(int simplifiedAddress) throws UnknownHostException {
+        byte[] addressArray = new byte[4];
+        for (int i = 0; i < addressArray.length; i++) {
+            addressArray[addressArray.length - i - 1] = (byte) (simplifiedAddress & 0xFF);
+            simplifiedAddress >>= 8;
+        }
+        return InetAddress.getByAddress(addressArray);
+    }
+
+    public static int getValueFromAddress(InetAddress inetAddress) {
+        int value = 0;
+        byte[] addressArray = inetAddress.getAddress();
+        for (byte b : addressArray) {
+            value = (value << 8) | (b & 0xFF);
+        }
+        return value;
+    }
+
+    public static @NotNull CidrNotation convertStringToCidrNotation(String cidrNotation) {
+        Validator.checkCidrNotation(cidrNotation);
+        String[] parts = cidrNotation.split("/");
+        String networkId = parts[0];
+        String subnetMask = convertPrefixToMask(Integer.parseInt(parts[1]));
+        return new CidrNotation(convertStringToByteArray(networkId),
+                convertStringToByteArray(subnetMask));
+    }
+
+    public static byte @Nullable [] convertStringToByteArray(String address) {
+        Validator.checkIsNotNull(address, "address");
+        try {
+            return InetAddress.getByName(address).getAddress();
+        } catch (UnknownHostException e) {
+            return null;
+        }
+    }
+
+    public static String convertByteArrayToString(byte[] networkOctets) {
+        StringJoiner joiner = new StringJoiner(".");
+        for (byte octet : networkOctets) {
+            joiner.add(String.valueOf(octet & 0xFF));
+        }
+        return joiner.toString();
+    }
+
+    public static @Nullable String convertPrefixToMask(int subnetPrefix) {
+        Validator.checkBounds(subnetPrefix, 0, 32, "subnetPrefix");
+        try {
+            byte[] subnetMaskBytes = new byte[4];
+            int bitsOfNetwork = 0xffffffff << (32 - subnetPrefix);
+            for (int i = 0; i < 4; i++) {
+                subnetMaskBytes[i] = (byte) ((bitsOfNetwork >> (24 - i * 8)) & 0xff);
+            }
+            InetAddress subnetInet = InetAddress.getByAddress(subnetMaskBytes);
+            return subnetInet.getHostAddress();
+        } catch (UnknownHostException e) {
+            return null;
+        }
+    }
+
+    public static int convertMaskToPrefix(String subnetMask) {
+        Validator.checkIsAValidIpv4(subnetMask, "subnetMask");
+        try {
+            InetAddress subnetInetAddress = InetAddress.getByName(subnetMask);
+            byte[] subnetMaskBytes = subnetInetAddress.getAddress();
+            int prefix = 0;
+            for (byte b : subnetMaskBytes) {
+                for (int i = 7; i >= 0; i--) {
+                    if (((b >> i) & 1) == 1) {
+                        prefix++;
+                    }
+                }
+            }
+            return prefix;
+        } catch (UnknownHostException e) {
+            return -1;
+        }
+    }
+
+    public static String clearIpv6Address(String address) {
+        checkIsNotNull(address, "address");
+        String[] divider = address.split("%");
+        if (divider.length == 0)
+            return address;
+        return divider[0];
     }
 
 }

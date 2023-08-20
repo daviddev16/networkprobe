@@ -2,7 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.entity.ResponseEntity;
-import com.networkprobe.core.util.NetworkUtil;
+import com.networkprobe.core.util.Utility;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,12 +22,13 @@ public class MetricsResponseEntity implements ResponseEntity<String> {
         Map<Integer, ClientMetrics> clientMetricsMap = NetworkMonitorService.getAllMetrics();
         try {
             for (Map.Entry<Integer, ClientMetrics> metricsEntry : clientMetricsMap.entrySet()) {
-                InetAddress entryInetAddress = NetworkUtil.getInetAddress(metricsEntry.getKey());
+                InetAddress entryInetAddress = Utility.getInetAddress(metricsEntry.getKey());
                 ClientMetrics clientMetrics = metricsEntry.getValue();
                 JSONObject metricJsonObject = new JSONObject()
                         .put("inet_address", entryInetAddress.getHostAddress())
                         .put("tcp_connections", clientMetrics.getTcpConnectionCount())
-                        .put("udp_connections", clientMetrics.getUdpReceivedCount());
+                        .put("udp_connections", clientMetrics.getUdpConnectionCount())
+                        .put("latest_requested_commands", clientMetrics.getRequestedCommands());
                 jsonArray.put(metricJsonObject);
             }
             return jsonArray.toString();

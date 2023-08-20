@@ -1,6 +1,6 @@
 package com.networkprobe.core.config;
 
-import com.networkprobe.core.util.NetworkUtil;
+import com.networkprobe.core.util.Utility;
 
 import static com.networkprobe.core.util.Validator.*;
 
@@ -55,7 +55,7 @@ public class Route {
 
         public Builder cidr(String cidrNotation) {
             checkIsNullOrEmpty(cidrNotation, "cidrNotation");
-            route.setCidr(NetworkUtil.convertStringToCidrNotation(cidrNotation));
+            route.setCidr(Utility.convertStringToCidrNotation(cidrNotation));
             return this;
         }
 

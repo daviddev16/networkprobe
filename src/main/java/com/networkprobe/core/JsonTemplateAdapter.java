@@ -1,5 +1,6 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.adapter.FileTemplateAdapter;
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.entity.ResponseEntity;
 import com.networkprobe.core.config.CidrNotation;
@@ -7,8 +8,9 @@ import com.networkprobe.core.config.Command;
 import com.networkprobe.core.config.Networking;
 import com.networkprobe.core.config.Route;
 import com.networkprobe.core.exception.InvalidPropertyException;
-import com.networkprobe.core.util.IOUtil;
 import com.networkprobe.core.config.Key;
+import com.networkprobe.core.factory.ResponseEntityFactory;
+import com.networkprobe.core.util.Utility;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,12 +44,10 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
 
     @Override
     public void load(File jsonFile, ResponseEntityFactory responseEntityFactory) {
-
         try {
-
             checkIsReadable(jsonFile, "jsonFile");
             checkIsNotNull(responseEntityFactory, "responseEntityFactory");
-            JSONObject jsonObject = new JSONObject(IOUtil.readFile(jsonFile));
+            JSONObject jsonObject = new JSONObject(Utility.readFile(jsonFile));
 
             LOG.info("Carregando e validando informações do template json.");
             networking = loadNetworkingSettings(jsonObject);
@@ -55,7 +55,7 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
             routes = new HashMap<>();
             loadAllRoutes(jsonObject);
 
-            commands = Collections.synchronizedMap(new HashMap<>());
+            commands = new HashMap<>();
             loadAllCommands(jsonObject, responseEntityFactory);
             createMetricsCommand();
             verifyExistsInternalCommands();
@@ -204,7 +204,8 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
 
     private void createMetricsCommand() {
         String metricCmdName = "np:metrics";
-        commands.put(metricCmdName, new Command.Builder()
+        commands.put(metricCmdName,
+                new Command.Builder()
                 .response(new MetricsResponseEntity())
                 .network(CidrNotation.ALL)
                 .name(metricCmdName)

@@ -3,12 +3,11 @@ package com.networkprobe.core;
 import com.networkprobe.core.annotation.AddressAsInventory;
 import com.networkprobe.core.annotation.Internal;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.util.Utility;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
 import java.util.Enumeration;
-
-import static com.networkprobe.core.util.NetworkUtil.*;
 
 /**
  * Essa classe é usada como referência para comandos que precisam de uma resposta dinâmica,
@@ -54,7 +53,7 @@ public final class UsableNetworkDataInventory {
             else if (inetAddressType.equalsIgnoreCase("ipv6") &&
                     currentInetAddress instanceof Inet6Address) {
                 if (currentIndex == index) {
-                    return clearIpv6Address(currentInetAddress.getHostAddress());
+                    return Utility.clearIpv6Address(currentInetAddress.getHostAddress());
                 }
                 currentIndex++;
             }

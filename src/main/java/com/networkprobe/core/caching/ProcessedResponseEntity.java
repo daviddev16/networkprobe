@@ -44,7 +44,7 @@ public class ProcessedResponseEntity extends CachedResponseEntity {
 
     private String safe(String evaluatedValue) {
         return (evaluatedValue != null && !evaluatedValue.isEmpty())
-                ? evaluatedValue : "<<empty_value_returned>>";
+                ? evaluatedValue : "<<null_or_empty_value_returned>>";
     }
     public List<Simplexer.FunctionToken> getFunctionTokens() {
         return functionTokens;

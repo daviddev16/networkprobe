@@ -15,7 +15,7 @@ import java.util.*;
  * SocketCommandProcessor é responsável por processar a informação recebida no Socket TCP e determinar
  * se o cliente pode requisitar o comando solicitado através do identificador de rede.
  * */
-@Singleton(creationType = SingletonType.LAZY)
+@Singleton(creationType = SingletonType.DYNAMIC)
 public class SocketCommandProcessor implements SocketDataMessageProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SocketCommandProcessor.class);
