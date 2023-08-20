@@ -2,7 +2,6 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.api.Template;
 import com.networkprobe.core.util.NetworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,6 @@ public final class NetworkExchangeService extends ExecutionWorker {
                     InetAddress.getByName(template.getNetworking().getTcpBindAddress()));
             LOG.info("Escutando na porta {} por requisições de comandos.", SERVER_PORT);
         } catch (Exception e) {
-            e.printStackTrace();
             ExceptionHandler.unexpected(LOG, e, 156);
         }
     }
@@ -46,9 +44,11 @@ public final class NetworkExchangeService extends ExecutionWorker {
     public void onUpdate() {
         try {
             synchronized (serverSocket) {
+
                 Socket clientSocket = serverSocket.accept();
-                int simplifiedAddress = NetworkUtil.getSimplifiedAddress(clientSocket.getInetAddress());
-                ClientMetrics clientMetrics = monitorService.getMetrics(simplifiedAddress);
+                int addressIntegerValue = NetworkUtil.getValueFromAddress(clientSocket.getInetAddress());
+                ClientMetrics clientMetrics = monitorService.getMetrics(addressIntegerValue);
+
                 if (allowTcpConnection(clientMetrics)) {
                     ClientHandler clientHandler = new ClientHandler(clientSocket);
                     clientHandler.start();
@@ -56,6 +56,7 @@ public final class NetworkExchangeService extends ExecutionWorker {
                     LOG.debug("'{}' ultrapassou o limite de conexões configurado.", clientSocket
                             .getInetAddress().getHostAddress());
                 }
+
             }
         } catch (Exception e) {
             ExceptionHandler.unexpected(LOG, e, 166);

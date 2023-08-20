@@ -1,10 +1,9 @@
 package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.api.ResponseEntity;
-import com.networkprobe.core.api.ResponseEntityFactory;
+import com.networkprobe.core.entity.ResponseEntity;
 import com.networkprobe.core.caching.ProcessedResponseEntity;
-import com.networkprobe.core.caching.StaticResponseEntity;
+import com.networkprobe.core.entity.StaticResponseEntity;
 import com.networkprobe.core.experimental.Simplexer;
 
 /**

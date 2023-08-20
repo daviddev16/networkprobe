@@ -11,7 +11,7 @@ import java.util.List;
  * */
 public class ProcessedResponseEntity extends CachedResponseEntity {
 
-    private final List<Simplexer.StringFunctionToken> functionTokens;
+    private final List<Simplexer.FunctionToken> functionTokens;
 
     public ProcessedResponseEntity(String rawContent, boolean cached) {
         super(rawContent, cached);
@@ -19,7 +19,7 @@ public class ProcessedResponseEntity extends CachedResponseEntity {
         cache();
     }
 
-    private List<Simplexer.StringFunctionToken> createAllFunctionTokens(String rawContent) {
+    private List<Simplexer.FunctionToken> createAllFunctionTokens(String rawContent) {
         Simplexer simplexer = new Simplexer(rawContent);
         simplexer.process();
         return simplexer.getFunctionTokens();
@@ -27,7 +27,7 @@ public class ProcessedResponseEntity extends CachedResponseEntity {
 
     private String parseAllTokensToValues() {
         String content = getRawContent();
-        for (Simplexer.StringFunctionToken token : getFunctionTokens())
+        for (Simplexer.FunctionToken token : getFunctionTokens())
         {
             String evaluatedValue = ClassMapperHandler.getInstance()
                     .execute(token.getMethodName(), token.getArguments());
@@ -46,7 +46,7 @@ public class ProcessedResponseEntity extends CachedResponseEntity {
         return (evaluatedValue != null && !evaluatedValue.isEmpty())
                 ? evaluatedValue : "<<empty_value_returned>>";
     }
-    public List<Simplexer.StringFunctionToken> getFunctionTokens() {
+    public List<Simplexer.FunctionToken> getFunctionTokens() {
         return functionTokens;
     }
 }

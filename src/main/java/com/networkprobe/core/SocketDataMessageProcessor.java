@@ -1,4 +1,4 @@
-package com.networkprobe.core.api;
+package com.networkprobe.core;
 
 import java.net.Socket;
 

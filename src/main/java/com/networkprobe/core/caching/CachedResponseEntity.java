@@ -1,5 +1,7 @@
 package com.networkprobe.core.caching;
 
+import com.networkprobe.core.entity.DefaultResponseEntity;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 

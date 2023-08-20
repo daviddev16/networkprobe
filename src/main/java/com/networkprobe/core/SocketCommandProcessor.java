@@ -2,9 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.api.ResponseEntity;
-import com.networkprobe.core.api.SocketDataMessageProcessor;
-import com.networkprobe.core.api.Template;
+import com.networkprobe.core.entity.ResponseEntity;
 import com.networkprobe.core.config.CidrNotation;
 import com.networkprobe.core.config.Command;
 import org.slf4j.Logger;

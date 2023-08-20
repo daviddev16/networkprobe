@@ -1,4 +1,4 @@
-package com.networkprobe.core.caching;
+package com.networkprobe.core.entity;
 
 import org.jetbrains.annotations.NotNull;
 

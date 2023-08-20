@@ -1,14 +1,12 @@
 package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.api.ResponseEntity;
-import com.networkprobe.core.api.FileTemplateAdapter;
+import com.networkprobe.core.entity.ResponseEntity;
 import com.networkprobe.core.config.CidrNotation;
 import com.networkprobe.core.config.Command;
 import com.networkprobe.core.config.Networking;
 import com.networkprobe.core.config.Route;
 import com.networkprobe.core.exception.InvalidPropertyException;
-import com.networkprobe.core.api.ResponseEntityFactory;
 import com.networkprobe.core.util.IOUtil;
 import com.networkprobe.core.config.Key;
 import org.json.JSONArray;

@@ -24,7 +24,7 @@
 			"routes": ["any"],
 			"cached_once": true,
 			"comment":  "Um acesso não autorizado ocorre quando um cliente consegue se conectar através de um socket TCP/IP, porém, a rede de origem não é aceita pelo comando desejado.",
-			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
+			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas.",
 		},
 		{
 			"name": "@internal:unknown",

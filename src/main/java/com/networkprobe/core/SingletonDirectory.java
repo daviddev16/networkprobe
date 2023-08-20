@@ -111,7 +111,7 @@ public final class SingletonDirectory {
                         dependencyField.getAnnotation(ManagedDependency.class) == null)
                     continue;
 
-                Object classifiedObject = getSingleOf(dependencyField.getType());
+                Object classifiedObject = getCompatibleInstanceOf(dependencyField.getType());
                 internalPerformFieldInjection(instantiationObject, dependencyField, classifiedObject);
             }
         }
@@ -155,6 +155,23 @@ public final class SingletonDirectory {
     public static <E> E getSingleOf(Class<E> objectClass){
         try {
             return internalGenericSingleOf(objectClass);
+        } catch (Exception e) {
+            throw new SingletonException("Houve um erro ao recuperar uma instância singleton", e);
+        }
+    }
+
+    @Nullable
+    public static Object getCompatibleInstanceOf(Class<?> objectClass){
+        try {
+            SingletonClassInfo classInfo = singletonInfoMap.values()
+                    .parallelStream()
+                    .filter(singletonClassInfo -> objectClass
+                            .isAssignableFrom(singletonClassInfo.getObjectClass()))
+                    .findAny()
+                    .orElseThrow(() -> new NullPointerException("Não foi possível encontrar " +
+                            "uma classe compatível para \"" + objectClass.getName() + "\"."));
+
+            return classInfo.getInstance();
         } catch (Exception e) {
             throw new SingletonException("Houve um erro ao recuperar uma instância singleton", e);
         }

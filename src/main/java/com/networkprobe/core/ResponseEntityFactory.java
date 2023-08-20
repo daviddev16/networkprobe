@@ -1,6 +1,8 @@
-package com.networkprobe.core.api;
+package com.networkprobe.core;
 
 import com.networkprobe.core.caching.*;
+import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.StaticResponseEntity;
 
 /**
  * ResponseEntityFactory será utilizado para definir qual será a implementação

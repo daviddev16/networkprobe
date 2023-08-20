@@ -1,6 +1,7 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.api.ResponseEntity;
+import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.entity.ResponseEntity;
 import com.networkprobe.core.util.NetworkUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,6 +13,7 @@ import java.util.Map;
  * MetricsResponseEntity é uma derivação de uma response que é usado
  * para monitoramento através do socket tcp
  * */
+@Singleton(creationType = SingletonType.DYNAMIC)
 public class MetricsResponseEntity implements ResponseEntity<String> {
 
     @Override
@@ -43,4 +45,5 @@ public class MetricsResponseEntity implements ResponseEntity<String> {
     public String getRawContent() {
         return null;
     }
+
 }

@@ -1,6 +1,6 @@
 package com.networkprobe.core.config;
 
-import com.networkprobe.core.api.ResponseEntity;
+import com.networkprobe.core.entity.ResponseEntity;
 
 import java.util.*;
 

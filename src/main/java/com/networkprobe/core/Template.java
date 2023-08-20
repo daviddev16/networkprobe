@@ -1,4 +1,4 @@
-package com.networkprobe.core.api;
+package com.networkprobe.core;
 
 import com.networkprobe.core.JsonTemplateAdapter;
 import com.networkprobe.core.config.Command;
