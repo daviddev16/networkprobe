@@ -2,6 +2,8 @@ package com.networkprobe.core.entity;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * O valor de um StaticResponseEntity não muda durante o tempo de
  * execução e sempre retornará um objeto do tipo String.
@@ -13,7 +15,7 @@ public class StaticResponseEntity extends DefaultResponseEntity<String> {
     }
 
     @Override
-    public @NotNull String getContent() {
+    public @NotNull String getContent(List<String> arguments) {
         return getRawContent() != null ? getRawContent() : "";
     }
 

@@ -1,4 +1,4 @@
-package com.networkprobe.core.factory;
+package com.networkprobe.core;
 
 import com.networkprobe.core.caching.*;
 import com.networkprobe.core.entity.ResponseEntity;
@@ -8,7 +8,7 @@ import com.networkprobe.core.entity.StaticResponseEntity;
  * ResponseEntityFactory será utilizado para definir qual será a implementação
  * do ResponseEntity de acordo com o conteúdo do campo 'response' de um comando.
  *
- * @see com.networkprobe.core.config.Command
+ * @see com.networkprobe.core.model.Command
  *
  * */
 public interface ResponseEntityFactory {

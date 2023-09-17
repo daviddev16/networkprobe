@@ -2,8 +2,6 @@ package com.networkprobe.core;
 
 import java.net.Socket;
 
-import com.networkprobe.core.*;
-
 public interface SocketDataMessageProcessor {
 
     /**

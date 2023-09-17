@@ -1,4 +1,4 @@
-package com.networkprobe.core.config;
+package com.networkprobe.core.model;
 
 import com.networkprobe.core.entity.ResponseEntity;
 
@@ -12,13 +12,18 @@ public class Command {
     private String name;
     private ResponseEntity<?> response;
     private Set<CidrNotation> routes;
+    /*TODO:*/
+    private List<String> arguments;
+    private Set<String> tags;
     private boolean cachedOnce;
 
-    public Command(String name, ResponseEntity<?> response, Set<CidrNotation> routes, boolean cachedOnce) {
+    public Command(String name, ResponseEntity<?> response, Set<CidrNotation> routes,
+                   boolean cachedOnce, Set<String> tags) {
         this.name = name;
         this.response = response;
         this.routes = routes;
         this.cachedOnce = cachedOnce;
+        this.tags = tags;
     }
 
     private Command() {}
@@ -55,11 +60,20 @@ public class Command {
         this.cachedOnce = cachedOnce;
     }
 
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    private void setTags(Set<String> tags) {
+        this.tags = tags;
+    }
+
     public static final class Builder {
 
         private final Command command = new Command();
         {
             command.setRoutes(new HashSet<>());
+            command.setTags(new HashSet<>());
         }
 
         public Builder name(String name) {
@@ -82,6 +96,12 @@ public class Command {
 
         public Builder cachedOnce(boolean cachedOnce) {
             command.setCachedOnce(cachedOnce);
+            return this;
+        }
+
+        public Builder addTag(String tag) {
+            checkIsNullOrEmpty(tag, "tag");
+            command.getTags().add(tag);
             return this;
         }
 

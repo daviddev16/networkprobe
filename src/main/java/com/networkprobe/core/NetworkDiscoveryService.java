@@ -2,6 +2,8 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.statistics.ClientMetrics;
+import com.networkprobe.core.statistics.Metric;
 import com.networkprobe.core.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +32,7 @@ public class NetworkDiscoveryService extends ExecutionWorker {
 
     private DatagramSocket datagramSocket;
 
-    public NetworkDiscoveryService()
-    {
+    public NetworkDiscoveryService() {
         super("discovery-service", true, false);
         SingletonDirectory.denyInstantiation(this);
     }
@@ -39,42 +40,41 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     @Override
     protected void onBegin() {
         try {
-            String bindAddress = template.getNetworking().getUdpBroadcastAddress();
-            datagramSocket = new DatagramSocket(new InetSocketAddress(InetAddress.getByName(bindAddress), DISCOVERY_PORT));
+
+            datagramSocket = new DatagramSocket(new InetSocketAddress(InetAddress.getByName(template
+                    .getNetworking().getUdpBroadcastAddress()), DISCOVERY_PORT));
             datagramSocket.setBroadcast(true);
+
             LOG.info("Escutando na porta {} por tentativas de descoberta.", DISCOVERY_PORT);
+
         } catch (Exception e) {
-            ExceptionHandler.unexpected(LOG, e, 155);
+            ExceptionHandler.handleUnexpected(LOG, e, Reason.UDP_SOCKET_BEGIN);
         }
     }
 
     @Override
     public void onUpdate() {
         try {
-            DatagramPacket bufferedPacket = Utility.createABufferedPacket(0);
-            datagramSocket.receive(bufferedPacket);
-            GlobalMetrics.updatUdpMetric();
 
-            int addressIntegerValue = Utility.getValueFromAddress(bufferedPacket.getAddress());
-            ClientMetrics clientMetrics = monitorService.getMetrics(addressIntegerValue);
+            /* dummyPacket é um packet com o buffer de tamanho 2 bytes */
+            DatagramPacket dummyPacket = Utility.createABufferedPacket(0);
+            datagramSocket.receive(dummyPacket);
 
-            if (clientMetrics.getUdpConnectionCount() < template.getNetworking().getUdpRequestThreshold()) {
-                sendHelloToClient(bufferedPacket);
-                clientMetrics.countUdpAcceptedConnection();
-            }
+            ClientMetrics metrics = monitorService.getMetrics(dummyPacket.getAddress());
 
-            else if (NetworkProbeOptions.isDebugSocketEnabled()) {
+            if (metrics.checkAndUpdate(Metric.UDP_RECEIVED_COUNT, template.getNetworking().getUdpRequestThreshold()))
+                sendFeedbackHello(dummyPacket);
+
+            else if (NetworkProbeOptions.isDebugSocketEnabled())
                 LOG.debug("A flag 'HELLO' foi bloqueada de ser respondida " +
-                        "para o endereço: {}.", bufferedPacket.getAddress().getHostAddress());
-            }
+                        "para o endereço: {}.", dummyPacket.getAddress().getHostAddress());
 
         } catch (Exception e) {
-            e.printStackTrace();
-            ExceptionHandler.unexpected(LOG, e, 1);
+            ExceptionHandler.handleUnexpected(LOG, e, Reason.UDP_SOCKET_UPDATE);
         }
     }
 
-    private void sendHelloToClient(DatagramPacket packet) throws IOException {
+    private void sendFeedbackHello(DatagramPacket packet) throws IOException {
         if (packet.getData()[0] == HELLO_FLAG[0]) {
             if (NetworkProbeOptions.isDebugSocketEnabled())
                 LOG.debug("\"{}\" enviou uma flag de descoberta e será respondido.",
@@ -90,16 +90,13 @@ public class NetworkDiscoveryService extends ExecutionWorker {
         }
     }
 
-    @Override
-    public void onStop() {
-        try {
-            if (datagramSocket != null)
-                datagramSocket.close();
-        } catch (Exception e) { /* ignore */ }
-    }
-
     public static NetworkDiscoveryService getDiscoveryService() {
         return SingletonDirectory.getSingleOf(NetworkDiscoveryService.class);
+    }
+
+    @Override
+    public void onStop() {
+        Utility.closeQuietly(datagramSocket);
     }
 
 }

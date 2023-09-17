@@ -7,46 +7,90 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.networkprobe.core.util.Utility.*;
 
 public class ClientHandler extends ExecutionWorker {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientHandler.class);
+    private static final Set<Integer> connectedClients = new HashSet<>();
     private static final AtomicInteger ID = new AtomicInteger(-1);
+    private static final SocketDataMessageProcessor messageProcessor;
+    static
+    {
+        messageProcessor = (SocketDataMessageProcessor)
+                SingletonDirectory.getCompatibleInstanceOf(SocketDataMessageProcessor.class);
+    }
 
     private final Socket clientSocket;
-    private final PrintWriter outputWriter;
-    private final Scanner inputScanner;
 
-    private final SocketDataMessageProcessor messageProcessor = SingletonDirectory.getSingleOf(SocketCommandProcessor.class);
-
-    public ClientHandler(Socket clientSocket) throws IOException {
+    private ClientHandler(Socket clientSocket) {
         super("client-worker" + ID.incrementAndGet(), false, false);
-        this.outputWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-        this.inputScanner = new Scanner(clientSocket.getInputStream());
         this.clientSocket = clientSocket;
-        GlobalMetrics.updatTcpMetric();
     }
 
     @Override
     public void onBegin() {
+        PrintWriter outputWriter = null;
+        Scanner inputScanner = null;
         try {
+            register(clientSocket);
+            outputWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+            inputScanner = new Scanner(clientSocket.getInputStream());
             while (inputScanner.hasNextLine()) {
-                String receivedContent = inputScanner.nextLine();
-                String response = messageProcessor.processSocketMessage(receivedContent, clientSocket);
+                String clientSentValue = inputScanner.nextLine();
+                String response = messageProcessor.processSocketMessage(clientSentValue, clientSocket);
                 outputWriter.println(response);
+                outputWriter.flush();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            ExceptionHandler.unexpected(LOG, e, 190);
+        } catch (IOException exception) {
+            ExceptionHandler.handleUnexpected(LOG, exception, Reason.TCP_CLIENT_HANDLER_PROCESS);
+        } finally {
+            closeQuietly(clientSocket, outputWriter, inputScanner);
+            unregister(clientSocket);
         }
     }
 
     @Override
-    public void onStop()
-    {
-        Utility.closeQuietly(inputScanner, outputWriter, clientSocket);
+    protected void onUpdate() {
+        /* o processamento dos comandos deve ser feito no onBegin, caso chegue
+        no onUpdate a conexão deve ser forçada a ser encerrada */
+        if (clientSocket.isConnected()) {
+            try {
+                Thread.sleep(10);
+                Utility.closeQuietly(clientSocket);
+            } catch (InterruptedException ignore) {}
+            finally { unregister(clientSocket); }
+        }
+
+    }
+
+    public static void delegateHandlerTo(Socket clientSocket) {
+
+        if (!isAlreadyConnected(clientSocket)) {
+            ClientHandler clientHandler = new ClientHandler(clientSocket);
+            clientHandler.start();
+
+        } else if (NetworkProbeOptions.isDebugSocketEnabled())
+            LOG.debug("{} já está conectado em outra porta remota.", clientSocket
+                    .getInetAddress().getHostAddress());
+
+    }
+
+    private static void register(Socket clientSocket) {
+        connectedClients.add(convertSocketAddressToInterger(clientSocket));
+    }
+
+    private static void unregister(Socket clientSocket) {
+        connectedClients.remove(convertSocketAddressToInterger(clientSocket));
+    }
+
+    private static boolean isAlreadyConnected(Socket clientSocket) {
+        return connectedClients.contains(convertSocketAddressToInterger(clientSocket)) && false;
     }
 
 }

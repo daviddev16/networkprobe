@@ -3,8 +3,10 @@ package com.networkprobe.core;
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.entity.ResponseEntity;
-import com.networkprobe.core.config.CidrNotation;
-import com.networkprobe.core.config.Command;
+import com.networkprobe.core.model.CidrNotation;
+import com.networkprobe.core.model.Command;
+import com.networkprobe.core.exception.ApplicationOrigin;
+import com.networkprobe.core.exception.ClientRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,41 +22,52 @@ public class SocketCommandProcessor implements SocketDataMessageProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SocketCommandProcessor.class);
 
-    @ManagedDependency private JsonTemplateAdapter template;
+    @ManagedDependency
+    private Template template;
 
     @Override
-    public String processSocketMessage(String message, final Socket socket) {
+    public String processSocketMessage(String clientSentValue, final Socket socket) {
 
-        Command messagedCommand = template.getCommands().get(message);
+        try {
 
-        if (messagedCommand == null)
-            return template.unknownResponse();
+            CommandRequest commandRequest = new CommandRequest(clientSentValue);
+            Command requestedCommand = template.fromRequest(commandRequest);
 
-        ResponseEntity<?> responseEntity = messagedCommand.getResponse();
+            if (requestedCommand == null)
+                return template.unknownResponse();
 
-        if (checkIsClientAllowed(socket.getInetAddress().getAddress(), messagedCommand.getRoutes())) {
-            if (NetworkProbeOptions.isDebugSocketEnabled()) {
-                LOG.debug("SOCKET: \"{}\" requisitou \"{}\" e foi aceito / respondido.",
-                        socket.getInetAddress().getHostAddress(), message);
+            ResponseEntity<?> responseEntity = requestedCommand.getResponse();
+
+            if (isClientNetAllowed(socket, requestedCommand.getRoutes())) {
+                if (NetworkProbeOptions.isDebugSocketEnabled())
+                    LOG.debug("SOCKET: \"{}\" requisitou \"{}\" e foi aceito / respondido.",
+                            socket.getInetAddress().getHostAddress(), clientSentValue);
+
+                return Template.parameterized(responseEntity, commandRequest.arguments());
             }
-            return responseEntity.getContent().toString();
+            if (NetworkProbeOptions.isDebugSocketEnabled())
+                LOG.debug("\"{}\" requisitou \"{}\" e foi negado pelo bloqueio de rotas.",
+                        socket.getInetAddress().getHostAddress(), clientSentValue);
+
         }
-        if (NetworkProbeOptions.isDebugSocketEnabled()) {
-            LOG.debug("\"{}\" requisitou \"{}\" e foi negado pelo bloqueio de rotas.",
-                    socket.getInetAddress().getHostAddress(), message);
+
+        catch (ClientRequestException requestException) {
+            return requestException.toJSONMessage(ApplicationOrigin.NPS);
         }
+
         return template.unauthorizedResponse();
     }
 
-    private boolean checkIsClientAllowed(byte[] clientAddressArray, Set<CidrNotation> allowedNetworks) {
+    private boolean isClientNetAllowed(Socket clientSocket, Set<CidrNotation> allowedNetworks) {
+        byte[] clientAddressArray = clientSocket.getInetAddress().getAddress();
         for (CidrNotation networkCidr : allowedNetworks) {
-            if (checkIsInAllowedSubnet(clientAddressArray, networkCidr))
+            if (isInAllowedSubnet(clientAddressArray, networkCidr))
                 return true;
         }
         return false;
     }
 
-    private boolean checkIsInAllowedSubnet(byte[] address, CidrNotation allowedNetwork) {
+    private boolean isInAllowedSubnet(byte[] address, CidrNotation allowedNetwork) {
         return Arrays.equals(calculateNetworkId(address, allowedNetwork
                 .getSubnetMask()), allowedNetwork.getNetwork());
     }

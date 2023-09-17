@@ -6,4 +6,8 @@ public final class DependencyException extends RuntimeException {
         super(message, throwable);
     }
 
+    public DependencyException(String message) {
+        super(message);
+    }
+
 }

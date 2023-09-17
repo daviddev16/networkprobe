@@ -3,12 +3,13 @@ package com.networkprobe.core;
 import org.apache.commons.cli.*;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Objects;
 
 public class NetworkProbeOptions {
 
-    private static boolean DEBUG_SOCKET;
-    private final CommandLine commandLine;
+    private static boolean debugSocket;
+    private static File templateFile;
 
     public NetworkProbeOptions(String[] args) throws ParseException
     {
@@ -17,13 +18,19 @@ public class NetworkProbeOptions {
         Options options = new Options()
         {{
             addOption("ds", "debug-sockets", false, "debug socket purpose");
+            addRequiredOption("t", "template", true, "template file");
         }};
-        commandLine = commandLineParser.parse(options, args);
-        DEBUG_SOCKET = commandLine.hasOption("debug-sockets");
+        CommandLine commandLine = commandLineParser.parse(options, args);
+        templateFile = new File(commandLine.getOptionValue("template"));
+        debugSocket = commandLine.hasOption("debug-sockets");
     }
 
     public static boolean isDebugSocketEnabled() {
-        return DEBUG_SOCKET;
+        return debugSocket;
+    }
+
+    public static File getTemplateFile() {
+        return templateFile;
     }
 
 }

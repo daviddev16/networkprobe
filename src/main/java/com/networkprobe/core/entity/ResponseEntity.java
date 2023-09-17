@@ -2,6 +2,8 @@ package com.networkprobe.core.entity;
 
 import com.networkprobe.core.caching.*;
 
+import java.util.List;
+
 /**
  * ResponseEntity é uma interface que viabiliza as respostas das requisições
  * dos comandos recebidos, podendo ser um conteúdo estático ou dinâmico determinado
@@ -24,7 +26,7 @@ public interface ResponseEntity<T> {
      * getContent retorna um valor de resposta determinado pela implementação
      * da interface, podendo ser um conteúdo estático ou dinâmico.
      * */
-    T getContent();
+    T getContent(List<String> arguments);
 
     /**
      * isCachedOnce será utilizado para determinar se a response vai precisar

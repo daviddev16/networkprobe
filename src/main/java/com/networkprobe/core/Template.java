@@ -1,12 +1,16 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.JsonTemplateAdapter;
-import com.networkprobe.core.config.Command;
-import com.networkprobe.core.config.Key;
-import com.networkprobe.core.config.Networking;
-import com.networkprobe.core.config.Route;
+import com.networkprobe.core.model.Command;
+import com.networkprobe.core.model.Key;
+import com.networkprobe.core.model.Networking;
+import com.networkprobe.core.model.Route;
+import com.networkprobe.core.entity.ResponseEntity;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+
+import static com.networkprobe.core.util.Validator.nonNull;
 
 /**
  *
@@ -17,20 +21,24 @@ import java.util.Map;
  * */
 public interface Template {
 
-    /**
-     * Retorna os valores de configuração de rede do Template
-     * */
-    Networking getNetworking();
+    static String parameterized(ResponseEntity<?> responseEntity, List<String> arguments) {
+        return responseEntity.getContent(arguments).toString();
+    }
 
-    /**
-     * Retorna um Map contendo as rotas do Template
-     * */
-    Map<String, Route> getRoutes();
+    default Command fromRequest(CommandRequest commandRequest) {
+        return getCommands()
+                .get(nonNull(commandRequest, "commandRequest")
+                .command());
+    }
 
-    /**
-     * Retorna um Map contendo as informações dos comandos do Template
-     * */
-    Map<String, Command> getCommands();
+    default String queryResponse(String key) {
+        return getCommands()
+                .get(key)
+                .getResponse()
+                /* unauthorizedResponse e unknownResponse não necessitam de parâmetros */
+                .getContent(Collections.emptyList())
+                .toString();
+    }
 
     default String unauthorizedResponse() {
         return queryResponse(Key.CMD_UNAUTHORIZED);
@@ -40,12 +48,8 @@ public interface Template {
         return queryResponse(Key.CMD_UNKNOWN);
     }
 
-    default String queryResponse(String key) {
-        return getCommands()
-                .get(key)
-                .getResponse()
-                .getContent()
-                .toString();
-    }
+    Networking getNetworking();
+    Map<String, Route> getRoutes();
+    Map<String, Command> getCommands();
 
 }

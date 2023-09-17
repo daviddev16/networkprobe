@@ -1,6 +1,7 @@
 package com.networkprobe.core;
 
 
+import com.networkprobe.Launcher;
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.exception.DependencyException;
@@ -34,7 +35,8 @@ public final class SingletonDirectory {
     private static final String BASE_SCAN_PACKAGE = "com.networkprobe";
     private static final Logger LOG = LoggerFactory.getLogger(SingletonDirectory.class);
     private static final Map<Class<?>, SingletonClassInfo> singletonInfoMap = new HashMap<>();
-    private static final Comparator<Class<?>> EXECUTION_ORDER = (o1, o2) ->
+
+    private static final Comparator<Class<?>> INSTANCE_ORDER = (o1, o2) ->
     {
         Singleton singletonClass1 = o1.getAnnotation(Singleton.class);
         Singleton singletonClass2 = o2.getAnnotation(Singleton.class);
@@ -46,7 +48,7 @@ public final class SingletonDirectory {
         Reflections reflections = new Reflections(BASE_SCAN_PACKAGE);
 
         List<Class<?>> singletonClasses = new ArrayList<>(reflections.getTypesAnnotatedWith(Singleton.class));
-        singletonClasses.sort(EXECUTION_ORDER);
+        singletonClasses.sort(INSTANCE_ORDER);
 
         for (Class<?> dynamicSigletonClass : singletonClasses)
         {
@@ -97,6 +99,12 @@ public final class SingletonDirectory {
             addToInfoMap(objectClass, new SingletonClassInfo(objectClass, dynamicObjectInstance, singletonType));
         }
 
+    }
+
+    public static void registerCustomInstance(Object instantiationObject)
+            throws InstantiationException, IllegalAccessException
+    {
+        registerDynamicInstance(instantiationObject.getClass(), instantiationObject, SingletonType.INSTANTIATED);
     }
 
     public static void registerDynamicInstance(Class<?> objectClass, SingletonType singletonType)
@@ -176,9 +184,15 @@ public final class SingletonDirectory {
                             "uma classe compatível para \"" + objectClass.getName() + "\"."));
 
             return classInfo.getInstance();
+
         } catch (Exception e) {
             throw new SingletonException("Houve um erro ao recuperar uma instância singleton", e);
         }
+    }
+
+    @Nullable
+    public static Object getBasedDependency(Class<?> basedClass) {
+        return getCompatibleInstanceOf(basedClass);
     }
 
     /**
@@ -194,7 +208,7 @@ public final class SingletonDirectory {
     }
 
     private static boolean containsInstanceInfo(Class<?> objectClass) {
-        SingletonClassInfo classInfo = singletonInfoMap.getOrDefault(objectClass, null);
+        SingletonClassInfo classInfo = singletonInfoMap.get(objectClass);
         return classInfo != null && classInfo.getInstance() != null;
     }
 
@@ -236,4 +250,5 @@ public final class SingletonDirectory {
         }
         LOG.error("Houve um erro na inserção da classe '{}' no mapa de singletons.", objectClass.getName());
     }
+
 }

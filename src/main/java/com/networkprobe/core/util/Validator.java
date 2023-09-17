@@ -62,7 +62,14 @@ public class Validator {
         return file;
     }
 
+    @Deprecated
     public static <E> E checkIsNotNull(E object, String name) {
+        if (object == null)
+            throw new NullPointerException( format("O campo \"%s\" não pode ser nulo.", name) );
+        return object;
+    }
+
+    public static <E> E nonNull(E object, String name) {
         if (object == null)
             throw new NullPointerException( format("O campo \"%s\" não pode ser nulo.", name) );
         return object;

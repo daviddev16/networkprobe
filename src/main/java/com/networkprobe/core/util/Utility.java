@@ -1,20 +1,26 @@
 package com.networkprobe.core.util;
 
-import com.networkprobe.core.config.CidrNotation;
+import com.networkprobe.core.model.CidrNotation;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONArray;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
-import static com.networkprobe.core.util.Validator.checkIsNotNull;
+import static com.networkprobe.core.util.Validator.*;
 
 public class Utility {
 
@@ -26,11 +32,29 @@ public class Utility {
                 if (closeable != null)
                     closeable.close();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> mapOf(Map<String, Object> parent, String keyOfMap) {
+        return (Map<String, Object>) parent.get(keyOfMap);
+    }
+
+    public static boolean asBoolean(Object object) {
+        return Boolean.parseBoolean( Validator.nonNull(object, "object").toString() );
+    }
+
+    public static int asInt(Object object) {
+        return Integer.parseInt( Validator.nonNull(object, "object").toString() );
+    }
+
+    public static String asString(Object object) {
+        return (object != null) ? object.toString() : null;
     }
 
     public static @NotNull String readFile(File file) throws IOException {
-        Validator.checkIsReadable(file, file.getName());
+        checkIsReadable(file, file.getName());
         return String.join("\n", Files.readAllLines(Paths.get(file.toURI()))).trim();
     }
 
@@ -48,7 +72,7 @@ public class Utility {
         return InetAddress.getByAddress(addressArray);
     }
 
-    public static int getValueFromAddress(InetAddress inetAddress) {
+    public static int convertInetToInterger(InetAddress inetAddress) {
         int value = 0;
         byte[] addressArray = inetAddress.getAddress();
         for (byte b : addressArray) {
@@ -57,8 +81,12 @@ public class Utility {
         return value;
     }
 
+    public static int convertSocketAddressToInterger(Socket socket) {
+        return convertInetToInterger(socket.getInetAddress());
+    }
+
     public static @NotNull CidrNotation convertStringToCidrNotation(String cidrNotation) {
-        Validator.checkCidrNotation(cidrNotation);
+        checkCidrNotation(cidrNotation);
         String[] parts = cidrNotation.split("/");
         String networkId = parts[0];
         String subnetMask = convertPrefixToMask(Integer.parseInt(parts[1]));
@@ -67,9 +95,10 @@ public class Utility {
     }
 
     public static byte @Nullable [] convertStringToByteArray(String address) {
-        Validator.checkIsNotNull(address, "address");
         try {
-            return InetAddress.getByName(address).getAddress();
+            return InetAddress
+                    .getByName(nonNull(address, "address"))
+                    .getAddress();
         } catch (UnknownHostException e) {
             return null;
         }
@@ -84,7 +113,7 @@ public class Utility {
     }
 
     public static @Nullable String convertPrefixToMask(int subnetPrefix) {
-        Validator.checkBounds(subnetPrefix, 0, 32, "subnetPrefix");
+        checkBounds(subnetPrefix, 0, 32, "subnetPrefix");
         try {
             byte[] subnetMaskBytes = new byte[4];
             int bitsOfNetwork = 0xffffffff << (32 - subnetPrefix);
@@ -98,8 +127,23 @@ public class Utility {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static @NotNull <T> List<T> convertJsonArrayToList(@Nullable JSONArray jsonArray,
+                                                              @NotNull Class<T> itemType) {
+        nonNull(itemType, "itemType");
+        List<T> newList = new ArrayList<>();
+        if (jsonArray != null) {
+            for (int i = 0; i < jsonArray.length(); i++) {
+                Object jsonValue = jsonArray.get(i);
+                if (jsonValue != null && jsonValue.getClass().isAssignableFrom(itemType))
+                    newList.add((T) jsonValue);
+            }
+        }
+        return newList;
+    }
+
     public static int convertMaskToPrefix(String subnetMask) {
-        Validator.checkIsAValidIpv4(subnetMask, "subnetMask");
+        checkIsAValidIpv4(subnetMask, "subnetMask");
         try {
             InetAddress subnetInetAddress = InetAddress.getByName(subnetMask);
             byte[] subnetMaskBytes = subnetInetAddress.getAddress();
@@ -118,7 +162,7 @@ public class Utility {
     }
 
     public static String clearIpv6Address(String address) {
-        checkIsNotNull(address, "address");
+        nonNull(address, "address");
         String[] divider = address.split("%");
         if (divider.length == 0)
             return address;
