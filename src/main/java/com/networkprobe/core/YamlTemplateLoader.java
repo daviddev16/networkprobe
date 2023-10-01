@@ -131,8 +131,6 @@ public class YamlTemplateLoader implements FileTemplateLoader {
             for (CidrNotation cidrNotation : getAllValidRoutes(routesSequence,
                     configurationHolder.getConfigurableTemplate()))
             {
-                System.out.println("\n\n"+commandName);
-                System.out.println(cidrNotation.toString()+"\n\n");
                 commandBuilder.network(cidrNotation);
             }
 

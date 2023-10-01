@@ -15,6 +15,7 @@ import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.networkprobe.core.util.Validator.*;
 
@@ -50,6 +51,8 @@ public final class SingletonDirectory {
         List<Class<?>> singletonClasses = new ArrayList<>(reflections.getTypesAnnotatedWith(Singleton.class));
         singletonClasses.sort(INSTANCE_ORDER);
 
+        long startRegisterTime = System.currentTimeMillis();
+
         for (Class<?> dynamicSigletonClass : singletonClasses)
         {
             Singleton singleton = dynamicSigletonClass.getAnnotation(Singleton.class);
@@ -71,6 +74,14 @@ public final class SingletonDirectory {
             if (singletonClassInfo.getSingletonType() == SingletonType.DYNAMIC)
                 internalFieldInjection(singletonClassInfo.getInstance());
         }
+
+        System.out.println();
+        LOG.info("Objetos gerenciados foram registradas com sucesso.");
+        LOG.info("Todos os serviços foram carregados. Tempo total de" +
+                " carregamento: {} s.", String.format("%.3f",
+                (System.currentTimeMillis() - startRegisterTime)/1000f));
+        LOG.info("Iniciando serviços de rede...");
+        System.out.println();
     }
 
     public static void registerDynamicInstance(Class<?> objectClass, Object instantiationObject,

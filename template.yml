@@ -1,0 +1,69 @@
+
+# EXEMPLO LOCAL COM 2 CONEXÕES DO TIPO PACK (FISCAL E DP) E 2 CONEXÕES DO TIPO SHOP (WSHOP / ISHOP)
+
+commands:
+    - name: '@internal:unauthorized'
+      response: '{"message": "unauthorized"}'
+      cachedOnce: true
+      routes:
+        - 'any'
+    - name: '@internal:unknown'
+      response: '{"message": "unknown"}'
+      cachedOnce: true
+      routes:
+        - 'any'
+    - name: 'ALTERDATA_FISCAL'
+      response: '{"database": "ALTERDATA_FISCAL", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+      cachedOnce: false
+      tags:
+        - 'PACK'
+      routes:
+        - 'hamach-debug'
+        - 'lan-01'
+        - 'lan-02'
+    - name: 'ALTERDATA_DEPARTAMENTO_PESSOAL'
+      response: '{"database": "ALTERDATA_DEPARTAMENTO_PESSOAL", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+      cachedOnce: false
+      tags:
+        - 'PACK'
+      routes:
+        - 'hamach-bug-fix'
+        - 'lan-01'
+        - 'lan-02'
+    - name: 'ALTERDATA_WSHOP'
+      response: '{"database": "ALTERDATA_SHOP", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+      cachedOnce: false
+      tags:
+        - 'SHOP'
+      routes:
+        - 'hamach-bug-fix'
+        - 'lan-01'
+        - 'lan-02'
+    - name: 'ALTERDATA_ISHOP'
+      response: '{"database": "ALTERDATA_ISHOP", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+      cachedOnce: false
+      tags:
+        - 'SHOP'
+      routes:
+        - 'hamach-bug-fix'
+        - 'lan-01'
+        - 'lan-02'
+networking:
+    exchangeService:
+        tcpSocketBindAddress: '0.0.0.0'    
+        tcpConnectionThreshold: 2000
+        tcpSocketBacklog: 50
+    discoveryService:
+        udpSocketBindAddress: '0.0.0.0' # = udp_broadcast_address
+        udpRequestThreshold: 2000
+        enableDiscovery: true
+    routes:
+        - name: 'lan-01'
+          cidr: '192.168.1.0/24'
+          description: 'Local Area Network Block 1'
+        - name: 'lan-02'
+          cidr: '10.200.111.0/28'
+          description: 'Local Area Network Block 2'
+        - name: 'hamach-bug-fix'
+          cidr: '25.75.78.241/32'
+          description: 'problema hamachi / recebendo broadcast pela interface do hamachi'

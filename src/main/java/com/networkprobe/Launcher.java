@@ -14,7 +14,7 @@ public class Launcher {
 
         Thread.currentThread().setName("network-probe-main");
 
-        args = new String[]{"--debug-sockets", "--template", "./template.yaml"};
+        args = new String[]{"--debug-sockets", "--template", "./template.yml"};
 
         LOG.info("\n\n _______          __                       __     __________             ___.           \n" +
                 " \\      \\   _____/  |___  _  _____________|  | __ \\______   \\______  ____\\_ |__   ____  \n" +
