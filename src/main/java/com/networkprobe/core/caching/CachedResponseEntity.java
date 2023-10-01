@@ -2,6 +2,7 @@ package com.networkprobe.core.caching;
 
 import com.networkprobe.core.entity.DefaultResponseEntity;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,10 +26,10 @@ public abstract class CachedResponseEntity extends DefaultResponseEntity<String>
     abstract void cache();
 
     @Override
-    public String getContent() {
+    public String getContent(List<String> arguments) {
 
-        if (!isCachedOnce() && getElapsedTime()>= CACHE_TIMEOUT)
-            cache();
+       if (!isCachedOnce() && getElapsedTime()>= CACHE_TIMEOUT)
+           cache();
 
         return getCachedValue().getValue();
     }

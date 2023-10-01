@@ -1,4 +1,4 @@
-package com.networkprobe.core.config;
+package com.networkprobe.core.model;
 
 import com.networkprobe.core.util.Utility;
 

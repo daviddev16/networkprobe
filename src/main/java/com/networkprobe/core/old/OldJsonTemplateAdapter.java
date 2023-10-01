@@ -1,15 +1,18 @@
-package com.networkprobe.core;
+package com.networkprobe.core.old;
 
+import com.networkprobe.core.JsonTemplateLoader;
+import com.networkprobe.core.BaseConfigurableTemplate;
+import com.networkprobe.core.Defaults;
+import com.networkprobe.core.SingletonDirectory;
 import com.networkprobe.core.adapter.FileTemplateAdapter;
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.Replaced;
 import com.networkprobe.core.entity.ResponseEntity;
-import com.networkprobe.core.config.CidrNotation;
-import com.networkprobe.core.config.Command;
-import com.networkprobe.core.config.Networking;
-import com.networkprobe.core.config.Route;
+import com.networkprobe.core.model.CidrNotation;
+import com.networkprobe.core.model.Command;
+import com.networkprobe.core.model.Route;
 import com.networkprobe.core.exception.InvalidPropertyException;
-import com.networkprobe.core.config.Key;
-import com.networkprobe.core.factory.ResponseEntityFactory;
+import com.networkprobe.core.model.Key;
+import com.networkprobe.core.ResponseEntityFactory;
 import com.networkprobe.core.util.Utility;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -24,20 +27,13 @@ import java.util.*;
 import static com.networkprobe.core.util.Validator.*;
 import static java.lang.String.format;
 
-@Singleton(creationType = SingletonType.DYNAMIC, order = -401)
-public class JsonTemplateAdapter implements FileTemplateAdapter {
+//@Singleton(creationType = SingletonType.DYNAMIC, order = -401)
+@Replaced(newer = JsonTemplateLoader.class)
+public class OldJsonTemplateAdapter extends BaseConfigurableTemplate implements FileTemplateAdapter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JsonTemplateAdapter.class);
-    private static final List<String> INTERNAL_COMMANDS = new ArrayList<String>()
-    {
-        { add(Key.CMD_UNAUTHORIZED); add(Key.CMD_UNKNOWN); } 
-    };
+    private static final Logger LOG = LoggerFactory.getLogger(OldJsonTemplateAdapter.class);
 
-    private Networking networking;
-    private Map<String, Route> routes;
-    private Map<String, Command> commands;
-
-    public JsonTemplateAdapter()
+    public OldJsonTemplateAdapter()
     {
         SingletonDirectory.denyInstantiation(this);
     }
@@ -46,22 +42,13 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
     public void load(File jsonFile, ResponseEntityFactory responseEntityFactory) {
         try {
             checkIsReadable(jsonFile, "jsonFile");
-            checkIsNotNull(responseEntityFactory, "responseEntityFactory");
-            JSONObject jsonObject = new JSONObject(Utility.readFile(jsonFile));
-
+            nonNull(responseEntityFactory, "responseEntityFactory");
             LOG.info("Carregando e validando informações do template json.");
-            networking = loadNetworkingSettings(jsonObject);
-
-            routes = new HashMap<>();
+            JSONObject jsonObject = new JSONObject(Utility.readFile(jsonFile));
+            loadNetworkingSettings(jsonObject);
             loadAllRoutes(jsonObject);
-
-            commands = new HashMap<>();
             loadAllCommands(jsonObject, responseEntityFactory);
-            createMetricsCommand();
-            verifyExistsInternalCommands();
-
             LOG.info("Template carregado com sucesso.");
-
         } catch (Exception exception) {
 
             if (exception instanceof JSONException)
@@ -74,26 +61,31 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
                 LOG.error("Foi identificado um parâmetro inválido dentro das configurações.");
 
             LOG.error("Dentro do arquivo \"{}\", verifique a seguinte informação: " +
-                            "\n{}\n", jsonFile.getName(), exception.getMessage());
+                    "\n{}\n", jsonFile.getName(), exception.getMessage());
 
             Runtime.getRuntime().exit(155);
         }
     }
 
-
-
-    private Networking loadNetworkingSettings(final JSONObject jsonObject)
+    private void loadNetworkingSettings(final JSONObject jsonObject)
             throws JSONException {
-
         JSONObject networkingJsonObject = jsonObject.getJSONObject(Key.NETWORKING);
-        return new Networking.Builder()
-                .tcpBindAddress(networkingJsonObject.getString(Key.TCP_BIND_ADDRESS))
-                .udpBroadcastAddress(networkingJsonObject.getString(Key.UDP_BROADCAST_ADDRESS))
-                .enableDiscovery(networkingJsonObject.getBoolean(Key.ENABLE_DISCOVERY))
-                .tcpSocketBacklog(networkingJsonObject.getInt(Key.TCP_SOCKET_BACKLOG))
-                .udpRequestThreshold(networkingJsonObject.getInt(Key.UDP_REQUEST_THRESHOLD))
-                .tcpConnectionThreshold(networkingJsonObject.getInt(Key.TCP_CONNECTION_THRESHOLD))
-                .get();
+        /*setNetworking(
+                new Networking.Builder()
+                        .tcpBindAddress(
+                                networkingJsonObject.getString(Key.TCP_BIND_ADDRESS))
+                        .udpBroadcastAddress(
+                                networkingJsonObject.getString(Key.UDP_BROADCAST_ADDRESS))
+                        .enableDiscovery(
+                                networkingJsonObject.getBoolean(Key.ENABLE_DISCOVERY))
+                        .tcpSocketBacklog(
+                                networkingJsonObject.getInt(Key.TCP_SOCKET_BACKLOG))
+                        .udpRequestThreshold(
+                                networkingJsonObject.getInt(Key.UDP_REQUEST_THRESHOLD))
+                        .tcpConnectionThreshold(
+                                networkingJsonObject.getInt(Key.TCP_CONNECTION_THRESHOLD))
+                        .get()
+        );*/
     }
 
     private void loadAllRoutes(final JSONObject jsonObject)
@@ -102,8 +94,8 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
         JSONArray routesJsonArray = jsonObject.getJSONArray(Key.ROUTES);
 
         /* adiciona as rotas padrões no mapa de rotas */
-        routes.put(Route.ANY.getName(), Route.ANY);
-        routes.put(Route.NONE.getName(), Route.NONE);
+        getRoutes().put("any", Route.ANY);
+        getRoutes().put("none", Route.NONE);
 
         for (Object routeObject : routesJsonArray) {
 
@@ -119,12 +111,12 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
                     .name(name)
                     .get();
 
-            routes.put(name, route);
+            getRoutes().put(name, route);
         }
     }
 
     private void loadAllCommands(final JSONObject jsonObject,
-                                      final ResponseEntityFactory responseEntityFactory)
+                                 final ResponseEntityFactory responseEntityFactory)
             throws JSONException, InvalidPropertyException {
 
         JSONArray commandsJsonArray = jsonObject.getJSONArray(Key.COMMANDS);
@@ -134,8 +126,8 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
             Object commandObject = commandsJsonArray.get(i);
 
             if (!(commandObject instanceof JSONObject))
-                throw incoherentPropertyTypeException(format("Um JSONObject é esperado no objeto de índice %d na " +
-                        "propriedade %s.", i, Key.COMMANDS));
+                throw incoherentPropertyTypeException(format("Um JSONObject é esperado no objeto de" +
+                        " índice %d na propriedade %s.", i, Key.COMMANDS));
 
             JSONObject commandJsonObject = (JSONObject) commandObject;
 
@@ -153,13 +145,34 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
                     .cachedOnce(cachedOnce)
                     .response(responseEntity);
 
+            JSONArray tagsArray = commandJsonObject.optJSONArray(Key.TAGS);
+
+            if (tagsArray != null) {
+                for (Object tagObject : tagsArray) {
+                    if (tagObject instanceof String)
+                        commandBuilder.addTag(tagObject.toString());
+                }
+            }
+
             for (CidrNotation cidrNotation : getAllValidRoutes(routesJsonArray))
                 commandBuilder.network(cidrNotation);
 
-            commands.put(commandName, commandBuilder.get());
+            getCommands().put(commandName, commandBuilder.get());
         }
+
+        /* VALIDANDO COMANDOS INTERNOS */
+        for (String internalCommandName : Defaults.COMMANDS) {
+            if (!getCommands().containsKey(internalCommandName))
+                throw incoherentPropertyTypeException(format("O comando interno '%s' não foi encontrado, tente " +
+                        "reinstalar o sistema novamente ou baixar o template padrão.", internalCommandName));
+        }
+
+        LOG.info("Os comandos internos foram verificados e não houve erros.");
     }
 
+    /**
+     * Retorna todas as rotas validas do comando
+     * */
     private List<CidrNotation> getAllValidRoutes(final JSONArray jsonArray) {
 
         List<CidrNotation> cidrNotations = new ArrayList<>();
@@ -173,7 +186,7 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
                         "propriedade %s.", i, Key.ROUTES));
 
             String routeName = (String) routeObject;
-            Route commandRoute = routes.get(routeName);
+            Route commandRoute = getRoutes().get(routeName);
 
             if (commandRoute == null) {
                 LOG.warn("A rota \"{}\" não existe no mapa de rotas, isso pode impedir o " +
@@ -183,49 +196,6 @@ public class JsonTemplateAdapter implements FileTemplateAdapter {
             cidrNotations.add(commandRoute.getCidr());
         }
         return cidrNotations;
-    }
-
-    private void verifyExistsInternalCommands() {
-        for (String internalCommandName : INTERNAL_COMMANDS) {
-            if (!getCommands().containsKey(internalCommandName))
-                throw incoherentPropertyTypeException(format("O comando interno '%s' não foi encontrado, tente " +
-                        "reinstalar o sistema novamente ou baixar o template padrão.", internalCommandName));
-        }
-        LOG.info("Os comandos internos foram verificados e não houve erros.");
-    }
-
-    private InvalidPropertyException incoherentPropertyTypeException(String message) {
-        return new InvalidPropertyException( message );
-    }
-
-    public static FileTemplateAdapter getTemplateInstance() {
-        return SingletonDirectory.getSingleOf(JsonTemplateAdapter.class);
-    }
-
-    private void createMetricsCommand() {
-        String metricCmdName = "np:metrics";
-        commands.put(metricCmdName,
-                new Command.Builder()
-                .response(new MetricsResponseEntity())
-                .network(CidrNotation.ALL)
-                .name(metricCmdName)
-                .cachedOnce(true)
-                .get());
-    }
-
-    @Override
-    public Networking getNetworking() {
-        return networking;
-    }
-
-    @Override
-    public Map<String, Route> getRoutes() {
-        return routes;
-    }
-
-    @Override
-    public Map<String, Command> getCommands() {
-        return commands;
     }
 
 }

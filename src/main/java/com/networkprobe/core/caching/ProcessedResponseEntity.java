@@ -27,8 +27,7 @@ public class ProcessedResponseEntity extends CachedResponseEntity {
 
     private String parseAllTokensToValues() {
         String content = getRawContent();
-        for (Simplexer.FunctionToken token : getFunctionTokens())
-        {
+        for (Simplexer.FunctionToken token : getFunctionTokens()) {
             String evaluatedValue = ClassMapperHandler.getInstance()
                     .execute(token.getMethodName(), token.getArguments());
             content = Simplexer.overlap(content, token, safe(evaluatedValue));

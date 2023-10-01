@@ -58,11 +58,18 @@ public class Validator {
     public static File checkIfExists(File file, String name) {
         checkIsNotNull(file, name);
         if (!file.exists())
-            throw new NullPointerException( format("O arquivo \"%s\" não existe.", name) );
+            throw new NullPointerException( format("O arquivo \"%s\" não existe.", file.getAbsolutePath()) );
         return file;
     }
 
+    @Deprecated
     public static <E> E checkIsNotNull(E object, String name) {
+        if (object == null)
+            throw new NullPointerException( format("O campo \"%s\" não pode ser nulo.", name) );
+        return object;
+    }
+
+    public static <E> E nonNull(E object, String name) {
         if (object == null)
             throw new NullPointerException( format("O campo \"%s\" não pode ser nulo.", name) );
         return object;

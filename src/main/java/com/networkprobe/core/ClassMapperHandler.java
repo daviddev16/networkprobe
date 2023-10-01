@@ -94,8 +94,8 @@ public final class ClassMapperHandler {
         else
             message = exception.getMessage();
 
-        ExceptionHandler.unexpected(LOG, new ExecutionFailedException(exception
-                .getClass().getSimpleName() + " -> " + message), 177);
+        ExceptionHandler.handleUnexpected(LOG, new ExecutionFailedException(message),
+                Reason.NPS_CLASS_MAPPER_PROCESS);
     }
 
     private Object invokeMethod(Method method, List<Object> args) throws InvocationTargetException, IllegalAccessException {
@@ -171,7 +171,6 @@ public final class ClassMapperHandler {
 
     public static ClassMapperHandler getInstance() {
         return (classMapperInstance != null) ? classMapperInstance :
-                (classMapperInstance = SingletonDirectory
-                        .getSingleOf(ClassMapperHandler.class));
+                (classMapperInstance = SingletonDirectory.getSingleOf(ClassMapperHandler.class));
     }
 }

@@ -1,4 +1,4 @@
-package com.networkprobe.core.config;
+package com.networkprobe.core.model;
 
 import static com.networkprobe.core.util.Validator.*;
 

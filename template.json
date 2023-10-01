@@ -1,11 +1,11 @@
 {
 	"networking": {
-		"tcp_bind_address": "0.0.0.0",
-		"udp_broadcast_address": "0.0.0.0",
-		"udp_request_threshold": 2000,
-		"tcp_connection_threshold": 2000,
-		"tcp_socket_backlog": 50,
-		"enable_discovery": true
+		"tcpSocketBindAddress": "0.0.0.0",
+		"udpSocketBindAddress": "0.0.0.0",
+		"udpRequestThreshold": 2000,
+		"tcpConnectionThreshold": 2000,
+		"tcpSocketBacklog": 50,
+		"enableDiscovery": true
 	},
 	"routes": [
 		{
@@ -24,36 +24,32 @@
 			"routes": ["any"],
 			"cached_once": true,
 			"comment":  "Um acesso não autorizado ocorre quando um cliente consegue se conectar através de um socket TCP/IP, porém, a rede de origem não é aceita pelo comando desejado.",
-			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas.",
+			"#usage": "Uso interno, não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
 		},
 		{
 			"name": "@internal:unknown",
 			"response": "unknown",
 			"routes": ["any"],
-			"cached_once": true,
+			"cachedOnce": true,
 			"comment":  "Uma resposta com mensagem desenconhecida informa que o comando requisitado, não foi encontrado no mapa de comandos.",
-			"#usage": "Uso interno, favor não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
+			"#usage": "Uso interno, não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
 		},
 		{
-			"name": "P10",
-			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
+			"name": "FISCAL",
+			"response": "{\"database\": \"ALTERDATA_FISCAL\", \"address\": \"${getAddressOf|eth10|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
 			"routes": ["any"],
-			"cached_once": false,
-			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK"
+			"cachedOnce": false,
+			"feature-experimental#cacheTimeout": "HOURS{2}",
+			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK",
+			"tags": ["PACK"]
 		},
 		{
-			"name": "B101",
-			"response": "{\"database\": \"ALTERDATA (ODBC)\", \"address\": \"10.201.40.111\", \"database_type\": \"SQL Server\"}",
+			"name": "DEPARTAMENTO_PESSOAL",
+			"response": "{\"database\": \"ALTERDATA_DP\", \"address\": \"${getAddressOf|eth8|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
 			"routes": ["any"],
-			"cached_once": true,
-			"#usage": "Esse comando é usado para fazer conexões vindas do sistema Alterdata Bimer liberado apenas para a subrede \"10.201.40.0/24\""
-		},
-		{
-			"name": "S10",
-			"response": "{\"database\": \"ALTERDATA_PACK\", \"address\": \"${getAddressOf|eth6|ipv4|0}\", \"database_type\": \"SQL Server\", \"nfeasy_shared_folder\": \"\\\\\\${getAddressOf|eth6|ipv4|0}\\\\\\DadosNFeasy\"}",
-			"routes": ["default_subnet_route", "bimer_rota_subrede"],
-			"cached_once": false,
-			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA SHOP"
+			"cachedOnce": false,
+			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK",
+			"tags": ["PACK"]
 		}
 	]
 }
