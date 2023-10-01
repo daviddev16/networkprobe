@@ -58,7 +58,7 @@ public class Validator {
     public static File checkIfExists(File file, String name) {
         checkIsNotNull(file, name);
         if (!file.exists())
-            throw new NullPointerException( format("O arquivo \"%s\" não existe.", name) );
+            throw new NullPointerException( format("O arquivo \"%s\" não existe.", file.getAbsolutePath()) );
         return file;
     }
 

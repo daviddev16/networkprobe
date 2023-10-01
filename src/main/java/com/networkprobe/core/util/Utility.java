@@ -41,8 +41,8 @@ public class Utility {
         return (Map<String, Object>) parent.get(keyOfMap);
     }
 
-    public static boolean asBoolean(Object object) {
-        return Boolean.parseBoolean( Validator.nonNull(object, "object").toString() );
+    public static boolean asBoolean(Object object, String fieldName) {
+        return Boolean.parseBoolean( Validator.nonNull(object, fieldName).toString() );
     }
 
     public static int asInt(Object object) {

@@ -25,7 +25,6 @@ public class JsonRuntimeException extends RuntimeException {
     public static String wrap(Exception exception, String origin) {
         return String.format("{@}:%s:%s", origin,
                 new JSONObject()
-                        .put("cause", exception.getClass().getSimpleName())
                         .put("message", exception.getMessage())
                 .toString());
     }

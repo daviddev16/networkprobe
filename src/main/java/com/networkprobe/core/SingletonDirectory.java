@@ -53,12 +53,17 @@ public final class SingletonDirectory {
         for (Class<?> dynamicSigletonClass : singletonClasses)
         {
             Singleton singleton = dynamicSigletonClass.getAnnotation(Singleton.class);
+
+            if (!singleton.enabled())
+                continue;
+
             if (singleton.creationType() == SingletonType.INSTANTIATED)
             {
                 LOG.warn("Não é possível utilizar instância dinâmica em uma classe do tipo singleton " +
                         "'INSTANTIATED'. {} será ignorada.", dynamicSigletonClass.getSimpleName());
                 return;
             }
+
             registerDynamicInstance(dynamicSigletonClass, singleton.creationType());
         }
         for (SingletonClassInfo singletonClassInfo : singletonInfoMap.values())

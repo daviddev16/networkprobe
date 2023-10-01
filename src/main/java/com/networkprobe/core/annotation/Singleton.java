@@ -30,4 +30,6 @@ public @interface Singleton {
      * */
     int order() default 0;
 
+    boolean enabled() default true;
+
 }

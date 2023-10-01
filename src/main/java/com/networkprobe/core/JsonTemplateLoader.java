@@ -25,8 +25,9 @@ public class JsonTemplateLoader implements FileTemplateLoader {
     public static final Logger LOG = LoggerFactory.getLogger(JsonTemplateLoader.class);
 
     @Override
-    public ConfigurationHolder getConfigurator(File file, BaseConfigurableTemplate configurableTemplate) throws IOException {
-        return ConfigurationHolder.of(new JSONObject(readFile(file)), configurableTemplate);
+    public ConfigurationHolder getConfigurator(File file,
+                                               BaseConfigurableTemplate configurableTemplate) throws IOException {
+        return new JsonConfigurationHolder(new JSONObject(readFile(file)), configurableTemplate);
     }
 
     @Override
@@ -41,8 +42,7 @@ public class JsonTemplateLoader implements FileTemplateLoader {
         else if (exception instanceof InvalidPropertyException)
             LOG.error("Foi identificado um parâmetro inválido dentro das configurações.");
 
-        LOG.error("Dentro do arquivo \"{}\", verifique a seguinte informação: " +
-                "\n{}\n", "jsonFile.getName()", exception.getMessage());
+        LOG.error("Houve um erro no carregamento do arquivo de template. Verifique: {}", exception.getMessage());
 
         return true;
     }
@@ -51,7 +51,7 @@ public class JsonTemplateLoader implements FileTemplateLoader {
     public void loadRouteSettings(ConfigurationHolder configurationHolder)
             throws JSONException, InvalidPropertyException {
 
-        JSONObject jsonObject = configurationHolder.getJSONObject();
+        JSONObject jsonObject = ((JsonConfigurationHolder)configurationHolder).getJSONObject();
 
         JSONArray routesJsonArray = jsonObject.getJSONArray(Key.ROUTES);
 
@@ -82,7 +82,7 @@ public class JsonTemplateLoader implements FileTemplateLoader {
 
     @Override
     public void loadNetworkingSettings(ConfigurationHolder configurationHolder) {
-        JSONObject jsonObject = configurationHolder.getJSONObject();
+        JSONObject jsonObject = ((JsonConfigurationHolder)configurationHolder).getJSONObject();
         JSONObject jsonNetConfig = jsonObject.getJSONObject(Key.NETWORKING);
         configurationHolder.getConfigurableTemplate()
                 .configureNetworking(
@@ -104,7 +104,8 @@ public class JsonTemplateLoader implements FileTemplateLoader {
 
     @Override
     public void loadCommandSettings(ConfigurationHolder configurationHolder, ResponseEntityFactory responseEntityFactory) {
-        JSONObject jsonObject = configurationHolder.getJSONObject();
+
+        JSONObject jsonObject = ((JsonConfigurationHolder)configurationHolder).getJSONObject();
 
         JSONArray commandsJsonArray = jsonObject.getJSONArray(Key.COMMANDS);
 
@@ -124,7 +125,7 @@ public class JsonTemplateLoader implements FileTemplateLoader {
 
             ResponseEntity<?> responseEntity = responseEntityFactory.responseEntityOf(
                     commandJsonObject.getString(Key.RESPONSE),
-                    commandJsonObject.getBoolean(Key.CACHED_ONCE)
+                    cachedOnce
             );
 
             Command.Builder commandBuilder = new Command.Builder()

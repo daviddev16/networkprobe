@@ -25,7 +25,7 @@ public class BaseFileTemplateAdapter
 
             ConfigurationHolder configurationHolder = templateLoader.getConfigurator(file, this);
             configurationHolder = (configurationHolder != null) ? configurationHolder :
-                    ConfigurationHolder.dummy();
+                    ConfigurationHolder.nullable();
 
             templateLoader.loadNetworkingSettings(configurationHolder);
             templateLoader.loadRouteSettings(configurationHolder);

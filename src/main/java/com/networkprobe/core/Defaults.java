@@ -1,5 +1,6 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.entity.QueryTagResponseEntity;
 import com.networkprobe.core.model.CidrNotation;
 import com.networkprobe.core.model.Command;
 import com.networkprobe.core.model.Key;
@@ -27,6 +28,16 @@ public class Defaults {
                                 .getSingleOf(MetricsResponseEntity.class))
                         .network(CidrNotation.ALL)
                         .name(metricCmdName)
+                        .cachedOnce(true)
+                        .get());
+
+        String queryTagName = "queryTags";
+        template.getCommands().put(queryTagName,
+                new Command.Builder()
+                        .response(SingletonDirectory
+                                .getSingleOf(QueryTagResponseEntity.class))
+                        .network(CidrNotation.ALL)
+                        .name(queryTagName)
                         .cachedOnce(true)
                         .get());
 

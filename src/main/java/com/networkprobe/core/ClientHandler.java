@@ -23,7 +23,7 @@ public class ClientHandler extends ExecutionWorker {
     static
     {
         messageProcessor = (SocketDataMessageProcessor)
-                SingletonDirectory.getCompatibleInstanceOf(SocketDataMessageProcessor.class);
+                SingletonDirectory.getBasedDependency(SocketDataMessageProcessor.class);
     }
 
     private final Socket clientSocket;
@@ -59,14 +59,11 @@ public class ClientHandler extends ExecutionWorker {
     protected void onUpdate() {
         /* o processamento dos comandos deve ser feito no onBegin, caso chegue
         no onUpdate a conexão deve ser forçada a ser encerrada */
-        if (clientSocket.isConnected()) {
-            try {
-                Thread.sleep(10);
+        if (!clientSocket.isClosed()) {
                 Utility.closeQuietly(clientSocket);
-            } catch (InterruptedException ignore) {}
-            finally { unregister(clientSocket); }
+                unregister(clientSocket);
+                stop();
         }
-
     }
 
     public static void delegateHandlerTo(Socket clientSocket) {

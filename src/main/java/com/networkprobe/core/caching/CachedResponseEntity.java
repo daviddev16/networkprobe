@@ -28,8 +28,8 @@ public abstract class CachedResponseEntity extends DefaultResponseEntity<String>
     @Override
     public String getContent(List<String> arguments) {
 
-        if (!isCachedOnce() && getElapsedTime()>= CACHE_TIMEOUT)
-            cache();
+       if (!isCachedOnce() && getElapsedTime()>= CACHE_TIMEOUT)
+           cache();
 
         return getCachedValue().getValue();
     }

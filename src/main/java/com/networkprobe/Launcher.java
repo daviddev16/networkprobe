@@ -5,8 +5,6 @@ import com.networkprobe.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-
 public class Launcher {
 
     private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);

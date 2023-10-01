@@ -1,11 +1,11 @@
 {
 	"networking": {
-		"tcp_bind_address": "0.0.0.0",
-		"udp_broadcast_address": "0.0.0.0",
-		"udp_request_threshold": 2000,
-		"tcp_connection_threshold": 2000,
-		"tcp_socket_backlog": 50,
-		"enable_discovery": true
+		"tcpSocketBindAddress": "0.0.0.0",
+		"udpSocketBindAddress": "0.0.0.0",
+		"udpRequestThreshold": 2000,
+		"tcpConnectionThreshold": 2000,
+		"tcpSocketBacklog": 50,
+		"enableDiscovery": true
 	},
 	"routes": [
 		{
@@ -30,15 +30,15 @@
 			"name": "@internal:unknown",
 			"response": "unknown",
 			"routes": ["any"],
-			"cached_once": true,
+			"cachedOnce": true,
 			"comment":  "Uma resposta com mensagem desenconhecida informa que o comando requisitado, não foi encontrado no mapa de comandos.",
 			"#usage": "Uso interno, não modificar este comando ou o cliente TCP/IP poderá receber informações incorretas."
 		},
 		{
 			"name": "FISCAL",
-			"response": "{\"database\": \"ALTERDATA_FISCAL\", \"address\": \"${getAddressOf|eth8|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
+			"response": "{\"database\": \"ALTERDATA_FISCAL\", \"address\": \"${getAddressOf|eth10|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
 			"routes": ["any"],
-			"cached_once": false,
+			"cachedOnce": false,
 			"feature-experimental#cacheTimeout": "HOURS{2}",
 			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK",
 			"tags": ["PACK"]
@@ -47,7 +47,7 @@
 			"name": "DEPARTAMENTO_PESSOAL",
 			"response": "{\"database\": \"ALTERDATA_DP\", \"address\": \"${getAddressOf|eth8|ipv4|0}\", \"database_type\": \"PostgreSQL\"}",
 			"routes": ["any"],
-			"cached_once": false,
+			"cachedOnce": false,
 			"#usage": "Esse comando é usado para fazer conexões vindas do sistema ALTERDATA PACK",
 			"tags": ["PACK"]
 		}
