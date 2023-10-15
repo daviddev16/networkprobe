@@ -1,6 +1,6 @@
 package com.networkprobe.core.caching;
 
-import com.networkprobe.core.entity.DefaultResponseEntity;
+import com.networkprobe.core.entity.base.DefaultResponseEntity;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -20,10 +20,11 @@ public abstract class CachedResponseEntity extends DefaultResponseEntity<String>
 
     public CachedResponseEntity(String rawContent, boolean cachedOnce) {
         super(rawContent);
+        cachedValue.lazySet(new CachedValue("", 0));
         this.cachedOnce = cachedOnce;
     }
 
-    abstract void cache();
+    public abstract void cache();
 
     @Override
     public String getContent(List<String> arguments) {
@@ -39,7 +40,7 @@ public abstract class CachedResponseEntity extends DefaultResponseEntity<String>
     }
 
     public void setCachedValue(CachedValue cachedValue) {
-        this.cachedValue.lazySet(cachedValue);
+        this.cachedValue.set(cachedValue);
     }
 
     public CachedValue getCachedValue() {

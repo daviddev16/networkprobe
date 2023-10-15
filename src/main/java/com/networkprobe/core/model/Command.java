@@ -1,6 +1,6 @@
 package com.networkprobe.core.model;
 
-import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.base.ResponseEntity;
 
 import java.util.*;
 
@@ -71,6 +71,7 @@ public class Command {
     public static final class Builder {
 
         private final Command command = new Command();
+
         {
             command.setRoutes(new HashSet<>());
             command.setTags(new HashSet<>());

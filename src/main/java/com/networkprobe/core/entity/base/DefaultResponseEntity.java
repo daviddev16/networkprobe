@@ -1,4 +1,4 @@
-package com.networkprobe.core.entity;
+package com.networkprobe.core.entity.base;
 
 /** Classe de instância padrão para ResponseEntity */
 public abstract class DefaultResponseEntity<T> implements ResponseEntity<T> {

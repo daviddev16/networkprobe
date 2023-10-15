@@ -43,7 +43,9 @@ public class ClientHandler extends ExecutionWorker {
             inputScanner = new Scanner(clientSocket.getInputStream());
             while (inputScanner.hasNextLine()) {
                 String clientSentValue = inputScanner.nextLine();
+                long start = System.currentTimeMillis();
                 String response = messageProcessor.processSocketMessage(clientSentValue, clientSocket);
+                System.out.println("Processed message took " + (System.currentTimeMillis() - start) + " ms");
                 outputWriter.println(response);
                 outputWriter.flush();
             }

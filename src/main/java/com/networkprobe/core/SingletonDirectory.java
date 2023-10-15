@@ -1,11 +1,14 @@
 package com.networkprobe.core;
 
 
-import com.networkprobe.Launcher;
+import com.networkprobe.core.annotation.CommandEntity;
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.exception.DependencyException;
 import com.networkprobe.core.exception.SingletonException;
+import com.networkprobe.core.model.CidrNotation;
+import com.networkprobe.core.model.Command;
 import org.jetbrains.annotations.Nullable;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -15,7 +18,6 @@ import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static com.networkprobe.core.util.Validator.*;
 
@@ -72,7 +74,7 @@ public final class SingletonDirectory {
         for (SingletonClassInfo singletonClassInfo : singletonInfoMap.values())
         {
             if (singletonClassInfo.getSingletonType() == SingletonType.DYNAMIC)
-                internalFieldInjection(singletonClassInfo.getInstance());
+                internalInstanceInitialization(singletonClassInfo.getInstance());
         }
 
         System.out.println();
@@ -84,11 +86,17 @@ public final class SingletonDirectory {
         System.out.println();
     }
 
+    private static void internalInstanceInitialization(Object instance) {
+        internalFieldInjection(instance);
+        internalRegisterAllCommandEntities(instance);
+    }
+
     public static void registerDynamicInstance(Class<?> objectClass, Object instantiationObject,
                                                SingletonType singletonType)
             throws InstantiationException, IllegalAccessException {
-        checkIsNotNull(objectClass, "objectClass");
-        checkIsNotNull(singletonType, "singletonType");
+
+        nonNull(objectClass, "objectClass");
+        nonNull(singletonType, "singletonType");
 
         if (containsInstanceInfo(objectClass))
             throw new SingletonException(objectClass, "essa classe já foi registrada no mapa de singletons");
@@ -121,6 +129,7 @@ public final class SingletonDirectory {
             throws InstantiationException, IllegalAccessException
     {
         registerDynamicInstance(instantiationObject.getClass(), instantiationObject, SingletonType.INSTANTIATED);
+        internalInstanceInitialization(instantiationObject);
     }
 
     public static void registerDynamicInstance(Class<?> objectClass, SingletonType singletonType)
@@ -149,7 +158,7 @@ public final class SingletonDirectory {
 
     private static void internalPerformFieldInjection(Object instantiationObject, Field dependencyField,
                                                Object valueObject) throws InvalidClassException, IllegalAccessException {
-        checkIsNotNull(valueObject, "valueObject");
+        nonNull(valueObject, "valueObject");
 
         Class<?> valueObjectType = valueObject.getClass();
 
@@ -206,6 +215,28 @@ public final class SingletonDirectory {
         }
     }
 
+    private static void internalRegisterAllCommandEntities(Object cmdObject) {
+        if (!(cmdObject instanceof ResponseEntity)) {
+            return;
+        }
+        ResponseEntity<?> responseEntity = (ResponseEntity<?>) cmdObject;
+        CommandEntity commandEntity = cmdObject.getClass().getAnnotation(CommandEntity.class);
+        Template template = (Template) getCompatibleInstanceOf(Template.class);
+        if (commandEntity != null) {
+            String commandName = commandEntity.commandName();
+            if (commandEntity.enabled()) {
+                template.getCommands()
+                        .putIfAbsent(commandName, new Command.Builder()
+                        .response(responseEntity)
+                        .network(CidrNotation.ALL)
+                        .name(commandName)
+                        .cachedOnce(false)
+                        .addTag("System")
+                        .get());
+            }
+        }
+    }
+
     @Nullable
     public static Object getBasedDependency(Class<?> basedClass) {
         return getCompatibleInstanceOf(basedClass);
@@ -220,7 +251,7 @@ public final class SingletonDirectory {
     }
 
     public static void denyInstantiation(Object object) {
-        denyInstantiation(checkIsNotNull(object, "object").getClass());
+        denyInstantiation(nonNull(object, "object").getClass());
     }
 
     private static boolean containsInstanceInfo(Class<?> objectClass) {
@@ -233,9 +264,10 @@ public final class SingletonDirectory {
             throws InstantiationException, IllegalAccessException {
 
         Object objectInstance = classInfo.getInstance();
-        if (objectInstance == null) {
+        if (objectInstance == null)
+        {
             objectInstance = newDynamicInstanceInternal(classInfo.getObjectClass());
-            internalFieldInjection(objectInstance);
+            internalInstanceInitialization(objectInstance);
         }
 
         return (T) objectInstance;
@@ -245,7 +277,7 @@ public final class SingletonDirectory {
     private static <T> T newDynamicInstanceInternal(Class<?> objectClass)
             throws SingletonException, InstantiationException, IllegalAccessException {
 
-        checkIsNotNull(objectClass, "objectClass");
+        nonNull(objectClass, "objectClass");
 
         if (objectClass.getConstructors().length == 0)
             throw new SingletonException(objectClass, "Não há construtores nessa classe");

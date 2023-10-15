@@ -4,7 +4,7 @@ import com.networkprobe.core.model.Command;
 import com.networkprobe.core.model.Key;
 import com.networkprobe.core.model.Networking;
 import com.networkprobe.core.model.Route;
-import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.base.ResponseEntity;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +31,7 @@ public interface Template {
                 .command());
     }
 
-    default String queryResponse(String key) {
+    default String responseByKey(String key) {
         return getCommands()
                 .get(key)
                 .getResponse()
@@ -41,11 +41,11 @@ public interface Template {
     }
 
     default String unauthorizedResponse() {
-        return queryResponse(Key.CMD_UNAUTHORIZED);
+        return responseByKey(Key.CMD_UNAUTHORIZED);
     }
 
     default String unknownResponse() {
-        return queryResponse(Key.CMD_UNKNOWN);
+        return responseByKey(Key.CMD_UNKNOWN);
     }
 
     Networking getNetworking();

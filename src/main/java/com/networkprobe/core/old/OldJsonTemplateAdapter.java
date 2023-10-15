@@ -6,7 +6,7 @@ import com.networkprobe.core.Defaults;
 import com.networkprobe.core.SingletonDirectory;
 import com.networkprobe.core.adapter.FileTemplateAdapter;
 import com.networkprobe.core.annotation.Replaced;
-import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.model.CidrNotation;
 import com.networkprobe.core.model.Command;
 import com.networkprobe.core.model.Route;

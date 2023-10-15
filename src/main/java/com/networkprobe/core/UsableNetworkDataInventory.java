@@ -3,11 +3,16 @@ package com.networkprobe.core;
 import com.networkprobe.core.annotation.AddressAsInventory;
 import com.networkprobe.core.annotation.Internal;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.UseAsData;
 import com.networkprobe.core.util.Utility;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+
+import static com.networkprobe.core.util.Utility.getMacAddress;
 
 /**
  * Essa classe é usada como referência para comandos que precisam de uma resposta dinâmica,
@@ -23,51 +28,50 @@ public final class UsableNetworkDataInventory {
         SingletonDirectory.denyInstantiation(this);
     }
 
-    @Nullable
-    public String getAddressOf(String interfaceName, String inetAddressType, int index) throws SocketException {
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-        while ((interfaces.hasMoreElements())) {
-            NetworkInterface ni = interfaces.nextElement();
-            if (ni.getName().equalsIgnoreCase(interfaceName)) {
-                return getInetAddressOfInterface(ni, inetAddressType, index);
-            }
-        }
-        return null;
-    }
+    @UseAsData(name = "GetActiveAddress")
+    public String getActiveAddress(String macAddress, int addressIndex, String addressInetType) {
 
-    @Internal
-    @Nullable
-    private String getInetAddressOfInterface(NetworkInterface networkInterface, String inetAddressType, int index) {
-        Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
-        int currentIndex = 0;
+        List<String> addresses = new ArrayList<>();
 
-        while (inetAddresses.hasMoreElements()) {
-            InetAddress currentInetAddress = inetAddresses.nextElement();
-            if (inetAddressType.equalsIgnoreCase("ipv4") &&
-                    currentInetAddress instanceof Inet4Address) {
-                if (currentIndex == index) {
-                    return currentInetAddress.getHostAddress();
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+
+                NetworkInterface networkInterface = networkInterfaces.nextElement();
+                byte[] macAddressArray = networkInterface.getHardwareAddress();
+
+                if (macAddressArray == null || !getMacAddress(macAddressArray)
+                        .equalsIgnoreCase(macAddress))
+                    continue;
+
+                Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+
+                while (inetAddresses.hasMoreElements()) {
+
+                    InetAddress inetAddress = inetAddresses.nextElement();
+
+                    switch (addressInetType) {
+                        case "IPV4":
+                            if (inetAddress instanceof Inet4Address)
+                                addresses.add(inetAddress.getHostAddress());
+                            break;
+                        case "IPV6":
+                            if (inetAddress instanceof Inet6Address)
+                                addresses.add(inetAddress.getHostAddress());
+                            break;
+                    }
+
                 }
-                currentIndex++;
-            }
-            else if (inetAddressType.equalsIgnoreCase("ipv6") &&
-                    currentInetAddress instanceof Inet6Address) {
-                if (currentIndex == index) {
-                    return Utility.clearIpv6Address(currentInetAddress.getHostAddress());
-                }
-                currentIndex++;
-            }
-        }
-        return null;
-    }
 
-    @Internal
-    private String toMacAddress(byte[] hardwareAddress) {
-        StringBuilder builder = new StringBuilder();
-        for (byte address : hardwareAddress) {
-            builder.append(String.format("%02x", address)).append(' ');
+            }
+        } catch (Exception e) {
+            return "Network Interface Error";
         }
-        return builder.toString().trim();
+
+        if (addresses.size() < addressIndex)
+            return "InetAddress Unavailable";
+
+        return addresses.get(addressIndex);
     }
 
     @Internal

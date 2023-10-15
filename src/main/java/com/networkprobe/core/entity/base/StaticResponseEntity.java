@@ -1,5 +1,6 @@
-package com.networkprobe.core.entity;
+package com.networkprobe.core.entity.base;
 
+import com.networkprobe.core.entity.base.DefaultResponseEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

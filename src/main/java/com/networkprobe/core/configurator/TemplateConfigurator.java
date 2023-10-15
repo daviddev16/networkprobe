@@ -25,7 +25,7 @@ public class TemplateConfigurator {
                 .chooseLoaderFrom(templateFile));
 
         templateAdapter.load(templateFile, CommandResponseFactory.getFactory());
-        Defaults.createDefaultApplicationCmds(templateAdapter);
+
     }
 
 }

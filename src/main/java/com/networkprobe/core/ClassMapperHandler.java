@@ -3,6 +3,7 @@ package com.networkprobe.core;
 import com.networkprobe.core.annotation.AddressAsInventory;
 import com.networkprobe.core.annotation.Internal;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.UseAsData;
 import com.networkprobe.core.exception.ExecutionFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static com.networkprobe.core.util.Validator.checkIsNotNull;
-import static com.networkprobe.core.util.Validator.checkIsNullOrEmpty;
+import static com.networkprobe.core.util.Validator.*;
 import static java.lang.String.*;
 
 /**
@@ -39,8 +39,7 @@ public final class ClassMapperHandler {
     public void extract(Object instance)
             throws InstanceAlreadyExistsException, IllegalAccessException {
 
-        checkIsNotNull(instance, "instance");
-        Class<?> clazz = instance.getClass();
+        Class<?> clazz = nonNull(instance, "instance").getClass();
 
         if (getInstances().containsKey(clazz))
             throw new InstanceAlreadyExistsException(format("Uma instância de %s já foi registrada.", clazz));
@@ -56,20 +55,20 @@ public final class ClassMapperHandler {
     private void extractAllMethods(Class<?> clazz) {
         for (Method method : clazz.getDeclaredMethods()) {
             if (isMethodAllowed(method)) {
-                getMethods().put(method.getName(), method);
+                UseAsData useAsDataAnn = method.getAnnotation(UseAsData.class);
+                getMethods().put( (useAsDataAnn != null) ?
+                        useAsDataAnn.name() : method.getName(), method);
             }
         }
     }
 
     public String execute(String methodName, List<String> arguments) throws ExecutionFailedException {
-        checkIsNotNull(methodName, "methodName");
-        checkIsNotNull(arguments, "arguments");
-        Method method = getMethods().get(methodName);
+        Method method = getMethods().get(nonNull(methodName, "methodName"));
         try {
             if (method == null) {
                 throw new NullPointerException(format("O método \"%s\" não existe.", methodName));
             }
-            Object value = invokeMethod(method, convertArgumentsToTypes(method, arguments));
+            Object value = invokeMethod(method, convertArgumentsToTypes(method, nonNull(arguments, "arguments")));
             return value == null ? NONE : value.toString();
         } catch (Exception e) {
             handleMethodInvocationExceptions(method, e);

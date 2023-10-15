@@ -1,28 +1,19 @@
 
-# EXEMPLO LOCAL COM 2 CONEXÕES DO TIPO PACK (FISCAL E DP) E 2 CONEXÕES DO TIPO SHOP (WSHOP / ISHOP)
-
 commands:
     - name: '@internal:unauthorized'
       response: '{"message": "unauthorized"}'
       cachedOnce: true
       routes:
         - 'any'
+
     - name: '@internal:unknown'
       response: '{"message": "unknown"}'
       cachedOnce: true
       routes:
         - 'any'
-    - name: 'ALTERDATA_FISCAL'
-      response: '{"database": "ALTERDATA_FISCAL", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
-      cachedOnce: false
-      tags:
-        - 'PACK'
-      routes:
-        - 'hamach-debug'
-        - 'lan-01'
-        - 'lan-02'
-    - name: 'ALTERDATA_DEPARTAMENTO_PESSOAL'
-      response: '{"database": "ALTERDATA_DEPARTAMENTO_PESSOAL", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+
+    - name: 'FISCAL'
+      response: 'ALTERDATA_PACK|${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}|PostgreSQL'
       cachedOnce: false
       tags:
         - 'PACK'
@@ -30,8 +21,19 @@ commands:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
-    - name: 'ALTERDATA_WSHOP'
-      response: '{"database": "ALTERDATA_SHOP", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+
+    - name: 'DEPARTAMENTO_PESSOAL'
+      response: '{"database": "ALTERDATA_DEPARTAMENTO_PESSOAL", "address": "${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}", "database_type": "PostgreSQL"}'
+      cachedOnce: false
+      tags:
+        - 'PACK'
+      routes:
+        - 'hamach-bug-fix'
+        - 'lan-01'
+        - 'lan-02'
+
+    - name: 'WSHOP'
+      response: '{"database": "ALTERDATA_SHOP", "address": "${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}", "database_type": "PostgreSQL"}'
       cachedOnce: false
       tags:
         - 'SHOP'
@@ -39,8 +41,9 @@ commands:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
-    - name: 'ALTERDATA_ISHOP'
-      response: '{"database": "ALTERDATA_ISHOP", "address": "${getAddressOf|eth10|ipv4|0}", "database_type": "PostgreSQL"}'
+
+    - name: 'ISHOP'
+      response: '{"database": "ALTERDATA_ISHOP", "address": "${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}", "database_type": "PostgreSQL"}'
       cachedOnce: false
       tags:
         - 'SHOP'
@@ -48,6 +51,7 @@ commands:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
+
 networking:
     exchangeService:
         tcpSocketBindAddress: '0.0.0.0'    

@@ -42,15 +42,7 @@ public class Utility {
     }
 
     public static boolean asBoolean(Object object, String fieldName) {
-        return Boolean.parseBoolean( Validator.nonNull(object, fieldName).toString() );
-    }
-
-    public static int asInt(Object object) {
-        return Integer.parseInt( Validator.nonNull(object, "object").toString() );
-    }
-
-    public static String asString(Object object) {
-        return (object != null) ? object.toString() : null;
+        return Boolean.parseBoolean( nonNull(object, fieldName).toString() );
     }
 
     public static @NotNull String readFile(File file) throws IOException {
@@ -167,6 +159,16 @@ public class Utility {
         if (divider.length == 0)
             return address;
         return divider[0];
+    }
+
+    public static String getMacAddress(byte[] hardwareAddress) {
+        StringBuilder sb = new StringBuilder(18);
+        for (byte b : hardwareAddress) {
+            if (sb.length() > 0)
+                sb.append(':');
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
 }

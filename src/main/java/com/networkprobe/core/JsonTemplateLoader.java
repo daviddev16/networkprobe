@@ -2,7 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.Singleton;
 import com.networkprobe.core.model.*;
-import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.exception.InvalidPropertyException;
 import org.json.JSONArray;
 import org.json.JSONException;

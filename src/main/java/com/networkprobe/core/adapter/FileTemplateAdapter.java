@@ -1,7 +1,7 @@
 package com.networkprobe.core.adapter;
 
 import com.networkprobe.core.Template;
-import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.ResponseEntityFactory;
 
 import java.io.File;

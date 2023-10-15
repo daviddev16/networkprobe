@@ -8,6 +8,8 @@ import java.util.Objects;
 
 public class NetworkProbeOptions {
 
+    public static final boolean STAGING = System.getenv("STAGING") != null;
+
     private static boolean debugSocket;
     private static File templateFile;
 

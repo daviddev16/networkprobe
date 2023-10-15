@@ -14,7 +14,8 @@ public class NetworkServicesFacade {
     private static final Logger LOG = LoggerFactory.getLogger(NetworkServicesFacade.class);
     private static NetworkServicesFacade networkServicesFacadeInstance;
 
-    @ManagedDependency private Template template;
+    @ManagedDependency
+    private Template template;
 
     public NetworkServicesFacade()
     {

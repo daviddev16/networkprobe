@@ -2,15 +2,20 @@ package com.networkprobe.core.entity;
 
 import com.networkprobe.core.SingletonType;
 import com.networkprobe.core.Template;
+import com.networkprobe.core.annotation.CommandEntity;
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.exception.ClientRequestException;
+import com.networkprobe.core.model.Command;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.List;
+import java.util.Optional;
 
-@Singleton(creationType = SingletonType.DYNAMIC, order = 201)
+@CommandEntity(commandName = "queryTags")
+@Singleton(creationType = SingletonType.DYNAMIC, order = 200)
 public class QueryTagResponseEntity implements ResponseEntity<String> {
 
     @ManagedDependency
@@ -24,20 +29,23 @@ public class QueryTagResponseEntity implements ResponseEntity<String> {
 
         JSONArray jsonArray = new JSONArray();
 
-        template.getCommands()
-                .values()
-                .parallelStream()
-                .filter(cmd -> {
-                    for (String tag : arguments) {
-                        return cmd.getTags().contains(tag);
-                    }
-                    return false;
-                }).forEach(cmd ->
-                        jsonArray.put(cmd.getName()));
+        for (Command command : template.getCommands().values()) {
+            if (containsTag(command, arguments)) {
+                jsonArray.put(command.getName());
+            }
+        }
 
         return new JSONObject()
-                .put("query_commands", jsonArray)
+                .put("commands", jsonArray)
                 .toString();
+    }
+
+    private boolean containsTag(Command command, List<String> arguments) {
+        for (String argumentsTag : arguments) {
+            if (command.getTags().contains(argumentsTag))
+                return true;
+        }
+        return false;
     }
 
     @Override

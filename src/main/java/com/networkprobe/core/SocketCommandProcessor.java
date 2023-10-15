@@ -2,7 +2,7 @@ package com.networkprobe.core;
 
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.entity.ResponseEntity;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.model.CidrNotation;
 import com.networkprobe.core.model.Command;
 import com.networkprobe.core.exception.ApplicationOrigin;

@@ -1,4 +1,4 @@
-package com.networkprobe.core.entity;
+package com.networkprobe.core.entity.base;
 
 import com.networkprobe.core.caching.*;
 

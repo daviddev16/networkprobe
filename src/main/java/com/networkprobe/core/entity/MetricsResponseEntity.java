@@ -2,8 +2,10 @@ package com.networkprobe.core.entity;
 
 import com.networkprobe.core.NetworkMonitorService;
 import com.networkprobe.core.SingletonType;
+import com.networkprobe.core.annotation.CommandEntity;
 import com.networkprobe.core.annotation.ManagedDependency;
 import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.statistics.ClientMetrics;
 import com.networkprobe.core.statistics.Metric;
 import com.networkprobe.core.util.Utility;
@@ -18,6 +20,7 @@ import java.util.Map;
  * MetricsResponseEntity é uma derivação de uma response que é usado
  * para monitoramento através do socket tcp
  * */
+@CommandEntity(commandName = "metrics")
 @Singleton(creationType = SingletonType.DYNAMIC, order = 200)
 public class MetricsResponseEntity implements ResponseEntity<String> {
 
