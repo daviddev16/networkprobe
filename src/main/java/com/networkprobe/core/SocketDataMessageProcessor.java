@@ -1,7 +1,10 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.miscs.Documented;
+
 import java.net.Socket;
 
+@Documented
 public interface SocketDataMessageProcessor {
 
     /**
@@ -13,9 +16,12 @@ public interface SocketDataMessageProcessor {
      * @return Retorna o dado processado pela implementação do SocketDataMessageProcessor
      * que erá enviado para o {@link ClientHandler} do cliente TCP/IP.
      *
-     * @param message A informação/comando recebida do socket TCP/IP do cliente
-     * @param socket Socket TCP/IP do cliente que será informado pelo ClientHandler
+     * @param receivedMessage  A informação/comando recebida do socket TCP/IP do cliente
+     * @param connectedSocket  Socket TCP/IP do cliente que será informado pelo ClientHandler
+     * @param clientHandler    ClientHandler que estará processando informação no momento da
+     *                         execução do processSocketMessage.
      *
      * */
-    String processSocketMessage(String message, Socket socket);
+    String processSocketMessage(String receivedMessage, Socket connectedSocket, ClientHandler clientHandler);
+
 }

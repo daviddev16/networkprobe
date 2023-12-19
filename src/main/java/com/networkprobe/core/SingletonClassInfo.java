@@ -1,5 +1,8 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.miscs.Documented;
+
+@Documented(done = false)
 public final class SingletonClassInfo {
 
     private final Object instance;

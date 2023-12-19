@@ -1,7 +1,8 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.ManagedDependency;
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.Handled;
+import com.networkprobe.core.annotation.reflections.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,16 +10,16 @@ import org.slf4j.LoggerFactory;
  *  NetworkServicesFacade faz a inicialização do serviço de descoberta e o serviço de troca
  **/
 @Singleton(creationType = SingletonType.DYNAMIC, order = -501)
+@Documented(done = false)
 public class NetworkServicesFacade {
 
     private static final Logger LOG = LoggerFactory.getLogger(NetworkServicesFacade.class);
     private static NetworkServicesFacade networkServicesFacadeInstance;
 
-    @ManagedDependency
+    @Handled
     private Template template;
 
-    public NetworkServicesFacade()
-    {
+    public NetworkServicesFacade() {
         SingletonDirectory.denyInstantiation(this);
     }
 
@@ -33,12 +34,12 @@ public class NetworkServicesFacade {
         NetworkExchangeService exchangeService = NetworkExchangeService.getExchangeService();
         exchangeService.start();
 
-        if (!template.getNetworking().isDiscoveryEnabled())
-            LOG.warn("O serviço de descoberta de rede foi desativado nas configurações.");
-
-        else {
+        if (template.getNetworking().isDiscoveryEnabled()){
             NetworkDiscoveryService discoveryService = NetworkDiscoveryService.getDiscoveryService();
             discoveryService.start();
+        }
+        else {
+            LOG.warn("O serviço de descoberta de rede foi desativado nas configurações.");
         }
     }
 

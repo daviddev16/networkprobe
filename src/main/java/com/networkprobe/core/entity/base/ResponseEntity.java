@@ -1,6 +1,8 @@
 package com.networkprobe.core.entity.base;
 
-import com.networkprobe.core.caching.*;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.entity.caching.CachedResponseEntity;
+import com.networkprobe.core.entity.caching.ProcessedResponseEntity;
 
 import java.util.List;
 
@@ -11,9 +13,10 @@ import java.util.List;
  *
  * @see CachedResponseEntity
  * @see ProcessedResponseEntity
- * @see StaticResponseEntity
+ * @see StaticTextResponseEntity
  *
  * */
+@Documented
 public interface ResponseEntity<T> {
 
     /**

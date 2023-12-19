@@ -1,26 +1,25 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.AddressAsInventory;
-import com.networkprobe.core.annotation.Internal;
-import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.annotation.UseAsData;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.ClassInventory;
+import com.networkprobe.core.annotation.reflections.Data;
+import com.networkprobe.core.annotation.reflections.Internal;
+import com.networkprobe.core.annotation.reflections.Singleton;
 import com.networkprobe.core.util.Utility;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-import static com.networkprobe.core.util.Utility.getMacAddress;
-
 /**
  * Essa classe é usada como referência para comandos que precisam de uma resposta dinâmica,
  * é onde fica o mapa de todas as funções endereçáveis nos comandos
  * */
 
-@AddressAsInventory
+@ClassInventory
 @Singleton(creationType = SingletonType.DYNAMIC, order = -450)
+@Documented(done = false)
 public final class UsableNetworkDataInventory {
 
     public UsableNetworkDataInventory()
@@ -28,20 +27,17 @@ public final class UsableNetworkDataInventory {
         SingletonDirectory.denyInstantiation(this);
     }
 
-    @UseAsData(name = "GetActiveAddress")
+    @Data(name = "GetActiveAddress")
     public String getActiveAddress(String macAddress, int addressIndex, String addressInetType) {
 
         List<String> addresses = new ArrayList<>();
-
         try {
             Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
             while (networkInterfaces.hasMoreElements()) {
 
                 NetworkInterface networkInterface = networkInterfaces.nextElement();
-                byte[] macAddressArray = networkInterface.getHardwareAddress();
 
-                if (macAddressArray == null || !getMacAddress(macAddressArray)
-                        .equalsIgnoreCase(macAddress))
+                if (checkMACAddress(networkInterface, macAddress))
                     continue;
 
                 Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
@@ -72,6 +68,14 @@ public final class UsableNetworkDataInventory {
             return "InetAddress Unavailable";
 
         return addresses.get(addressIndex);
+    }
+
+    @Internal
+    private boolean checkMACAddress(NetworkInterface networkInterface,
+                                    String expectedMacAddress) throws SocketException {
+        final byte[] macAddressArray = networkInterface.getHardwareAddress();
+        return macAddressArray != null && Utility.getMacAddress(macAddressArray)
+                .equalsIgnoreCase(expectedMacAddress);
     }
 
     @Internal

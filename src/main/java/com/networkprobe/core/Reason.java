@@ -1,5 +1,8 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.miscs.Documented;
+
+@Documented(done = false)
 public enum Reason {
 
     TCP_SOCKET_BEGIN           (900, "Serviço finalizado quando for lançado uma exceção durante a construção/início do soquete TCP."),
@@ -13,7 +16,8 @@ public enum Reason {
 
     NPS_CLASS_MAPPER_PROCESS   (200, "Encerramento devido a erro causado na execução de uma função dinâmica dentro de um ResponseEntity."),
 
-    NPS_CONFIGURATOR_EXCEPTION (1000, "Ocorre durante a configuração do sistema.");
+    NPS_CONFIGURATOR_EXCEPTION (1000, "Ocorreu um erro durante a configuração do sistema."),
+    NPS_FILE_LOADER_EXCEPTION  (1001, "Ocorreu um erro durante a leitura do arquivo de template.");
 
     private final int exitCode;
     private final String hint;

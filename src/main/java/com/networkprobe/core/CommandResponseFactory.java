@@ -1,36 +1,37 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.Singleton;
+import com.networkprobe.core.entity.caching.ProcessedResponseEntity;
 import com.networkprobe.core.entity.base.ResponseEntity;
-import com.networkprobe.core.caching.ProcessedResponseEntity;
-import com.networkprobe.core.entity.base.StaticResponseEntity;
+import com.networkprobe.core.entity.base.StaticTextResponseEntity;
 import com.networkprobe.core.experimental.Simplexer;
 
 /**
  *  CommandResponseFactory é uma implementação do ResponseEntityFactory, que  é responsável
  *  por determinar qual será a o tipo de ResponseEntity conforme o conteúdo do comando informado
- *  no arquivo de template JSON. O CommandResponseFactory faz a verificação se há expressão processável
+ *  no arquivo de template. O CommandResponseFactory faz a verificação se há expressão processável
  *  dentro do comando e faz decisão se o comando vai ser do tipo processado ou um conteúdo estático
  *  como uma String, por exemplo.
  **/
-
 @Singleton(creationType = SingletonType.DYNAMIC, order = 10)
+@Documented
 public final class CommandResponseFactory implements ResponseEntityFactory {
 
-    public CommandResponseFactory()
-    {
+    public CommandResponseFactory() {
         SingletonDirectory.denyInstantiation(this);
     }
 
-    public ResponseEntity<?> responseEntityOf(String rawContent, boolean cachedOnce)
-    {
+    public ResponseEntity<?> responseEntityOf(String rawContent, boolean cachedOnce) {
+
         if (Simplexer.containsExpression(rawContent))
             return new ProcessedResponseEntity(rawContent, cachedOnce);
         else
-            return new StaticResponseEntity(rawContent);
+            return new StaticTextResponseEntity(rawContent);
+
     }
 
-    public static CommandResponseFactory getFactory() {
+    public static CommandResponseFactory getInstance() {
         return SingletonDirectory.getSingleOf(CommandResponseFactory.class);
     }
 

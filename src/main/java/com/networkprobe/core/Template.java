@@ -1,10 +1,12 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.model.Command;
-import com.networkprobe.core.model.Key;
-import com.networkprobe.core.model.Networking;
-import com.networkprobe.core.model.Route;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.CommandEntity;
+import com.networkprobe.core.domain.Command;
+import com.networkprobe.core.domain.Networking;
+import com.networkprobe.core.domain.Route;
 import com.networkprobe.core.entity.base.ResponseEntity;
+import com.networkprobe.core.util.Key;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +21,13 @@ import static com.networkprobe.core.util.Validator.nonNull;
  * enviado pelo canal.
  *
  * */
+@Documented(done = false)
 public interface Template {
+
+    Networking getNetworking();
+    void configureNetworking(Networking networking);
+    Map<String, Route> getRoutes();
+    Map<String, Command> getCommands();
 
     static String parameterized(ResponseEntity<?> responseEntity, List<String> arguments) {
         return responseEntity.getContent(arguments).toString();
@@ -28,28 +36,33 @@ public interface Template {
     default Command fromRequest(CommandRequest commandRequest) {
         return getCommands()
                 .get(nonNull(commandRequest, "commandRequest")
-                .command());
+                        .command());
     }
 
-    default String responseByKey(String key) {
+    default String getResponseByName(String commandName) {
         return getCommands()
-                .get(key)
+                .get(commandName)
                 .getResponse()
                 /* unauthorizedResponse e unknownResponse não necessitam de parâmetros */
                 .getContent(Collections.emptyList())
                 .toString();
     }
 
+    default void clearTemplateSchema() {
+        getCommands().entrySet()
+                .removeIf(commandEntry ->
+                        commandEntry.getValue()
+                        .getClass()
+                        .isAnnotationPresent(CommandEntity.class));
+        getRoutes().clear();
+    }
+
     default String unauthorizedResponse() {
-        return responseByKey(Key.CMD_UNAUTHORIZED);
+        return getResponseByName(Key.CMD_UNAUTHORIZED);
     }
 
     default String unknownResponse() {
-        return responseByKey(Key.CMD_UNKNOWN);
+        return getResponseByName(Key.CMD_UNKNOWN);
     }
-
-    Networking getNetworking();
-    Map<String, Route> getRoutes();
-    Map<String, Command> getCommands();
 
 }

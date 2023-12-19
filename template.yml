@@ -1,18 +1,29 @@
 
 commands:
     - name: '@internal:unauthorized'
-      response: '{"message": "unauthorized"}'
+      response: '[NPS]: Não autorizado.'
       cachedOnce: true
       routes:
         - 'any'
 
     - name: '@internal:unknown'
-      response: '{"message": "unknown"}'
+      response: '[NPS]: Comando desconhecido!'
       cachedOnce: true
       routes:
         - 'any'
 
-    - name: 'FISCAL'
+    - name: 'PACK002'
+      response: 'ALTERDATA_PACK2|${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}|PostgreSQL'
+      cachedOnce: false
+      tags:
+        - 'PACK'
+      routes:
+        - 'hamach-bug-fix'
+        - 'lan-01'
+        - 'lan-02'
+        
+
+    - name: 'PACK001'
       response: 'ALTERDATA_PACK|${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}|PostgreSQL'
       cachedOnce: false
       tags:
@@ -21,36 +32,46 @@ commands:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
+        
+   
 
-    - name: 'DEPARTAMENTO_PESSOAL'
-      response: '{"database": "ALTERDATA_DEPARTAMENTO_PESSOAL", "address": "${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}", "database_type": "PostgreSQL"}'
+    - name: 'EMPRESA_WSHOP_1'
+      response: 'ALTERDATA_WSHOP|${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}|PostgreSQL'
       cachedOnce: false
       tags:
-        - 'PACK'
+        - 'WSHOP'
       routes:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
 
-    - name: 'WSHOP'
-      response: '{"database": "ALTERDATA_SHOP", "address": "${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}", "database_type": "PostgreSQL"}'
+    - name: 'EMPRESA_WSHOP_2'
+      response: 'ALTERDATA_WSHOP2|${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}|PostgreSQL'
       cachedOnce: false
       tags:
-        - 'SHOP'
+        - 'WSHOP'
       routes:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
 
     - name: 'ISHOP'
-      response: '{"database": "ALTERDATA_ISHOP", "address": "${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}", "database_type": "PostgreSQL"}'
+      response: 'ALTERDATA_ISHOP|${GetActiveAddress|8c:b0:e9:d0:bb:61|0|IPV4}|PostgreSQL'
       cachedOnce: false
       tags:
-        - 'SHOP'
+        - 'ISHOP'
       routes:
         - 'hamach-bug-fix'
         - 'lan-01'
         - 'lan-02'
+
+    - name: 'BIMER'
+      response: '${GetBimerBase64Data|192.168.1.112|ALTERDATA (ODBC)|BIMERDB12}|ALTERDATA (ODBC)'
+      cachedOnce: true
+      tags:
+        - 'ERP'
+      routes:
+        - 'any'
 
 networking:
     exchangeService:
@@ -58,13 +79,16 @@ networking:
         tcpConnectionThreshold: 2000
         tcpSocketBacklog: 50
     discoveryService:
-        udpSocketBindAddress: '0.0.0.0' # = udp_broadcast_address
+        udpSocketBindAddress: '0.0.0.0'
         udpRequestThreshold: 2000
         enableDiscovery: true
     routes:
         - name: 'lan-01'
           cidr: '192.168.1.0/24'
           description: 'Local Area Network Block 1'
+        - name: 'lan-03'
+          cidr: '172.16.203.0/24'
+          description: 'Local Area Network Block 3'
         - name: 'lan-02'
           cidr: '10.200.111.0/28'
           description: 'Local Area Network Block 2'

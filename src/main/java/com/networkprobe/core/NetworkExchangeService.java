@@ -1,7 +1,7 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.ManagedDependency;
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.reflections.Handled;
+import com.networkprobe.core.annotation.reflections.Singleton;
 import com.networkprobe.core.statistics.ClientMetrics;
 import com.networkprobe.core.statistics.Metric;
 import com.networkprobe.core.util.Utility;
@@ -13,14 +13,17 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 /** Responsável por responder e transmitir os comandos da rede via TCP/IP. **/
-@Singleton(creationType = SingletonType.LAZY)
+@Singleton(creationType = SingletonType.DYNAMIC)
 public final class NetworkExchangeService extends ExecutionWorker {
 
     private static final Logger LOG = LoggerFactory.getLogger(NetworkExchangeService.class);
     public static final int SERVER_PORT = 14477;
 
-    @ManagedDependency private NetworkMonitorService monitorService;
-    @ManagedDependency private Template template;
+    @Handled
+    private NetworkMonitorService monitorService;
+
+    @Handled
+    private Template template;
 
     private ServerSocket serverSocket;
 
@@ -55,12 +58,14 @@ public final class NetworkExchangeService extends ExecutionWorker {
                 ClientMetrics clientMetrics = monitorService.getMetrics(clientSocket.getInetAddress());
 
                 if (allowTcpConnection(clientMetrics)) {
-                    clientMetrics.upgrade(Metric.TCP_ACCEPTED_COUNT);
-                    ClientHandler.delegateHandlerTo(clientSocket);
+                    clientMetrics.upgradeMetricValue(Metric.TCP_ACCEPTED_COUNT);
+                    ClientHandler.delegateHandlerTo(clientSocket, clientMetrics);
                 }
-                else if (NetworkProbeOptions.isDebugSocketEnabled())
+                else if (NetworkProbeOptions.isDebugSocketEnabled()) {
                     LOG.debug("'{}' ultrapassou o limite de conexões configurado.", clientSocket
                             .getInetAddress().getHostAddress());
+                    Utility.closeQuietly(clientSocket);
+                }
 
             }
 
@@ -71,7 +76,7 @@ public final class NetworkExchangeService extends ExecutionWorker {
     }
 
     public boolean allowTcpConnection(ClientMetrics clientMetrics) {
-        return clientMetrics.get(Metric.TCP_ACCEPTED_COUNT) < template.getNetworking()
+        return clientMetrics.getIntegerValueOf(Metric.TCP_ACCEPTED_COUNT) < template.getNetworking()
                 .getTcpConnectionThreshold();
     }
 

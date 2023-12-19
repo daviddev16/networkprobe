@@ -1,7 +1,8 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.ManagedDependency;
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.Handled;
+import com.networkprobe.core.annotation.reflections.Singleton;
 import com.networkprobe.core.statistics.ClientMetrics;
 import com.networkprobe.core.statistics.Metric;
 import com.networkprobe.core.util.Utility;
@@ -16,7 +17,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 
 /** Responsável por responder a pacotes "HELLO" de UDP vindos da rede **/
-
 @Singleton(creationType = SingletonType.LAZY)
 public class NetworkDiscoveryService extends ExecutionWorker {
 
@@ -24,10 +24,10 @@ public class NetworkDiscoveryService extends ExecutionWorker {
     public static final byte[] HELLO_FLAG = "H".getBytes(StandardCharsets.UTF_8);
     public static final int DISCOVERY_PORT = 14476;
 
-    @ManagedDependency
+    @Handled
     private Template template;
 
-    @ManagedDependency
+    @Handled
     private NetworkMonitorService monitorService;
 
     private DatagramSocket datagramSocket;
@@ -62,9 +62,11 @@ public class NetworkDiscoveryService extends ExecutionWorker {
 
             ClientMetrics metrics = monitorService.getMetrics(dummyPacket.getAddress());
 
-            if (metrics.checkAndUpdate(Metric.UDP_RECEIVED_COUNT, template.getNetworking().getUdpRequestThreshold()))
+            if (metrics.checkThresholdAndUpdate(Metric.UDP_RECEIVED_COUNT, template
+                    .getNetworking().getUdpRequestThreshold()))
+            {
                 sendFeedbackHello(dummyPacket);
-
+            }
             else if (NetworkProbeOptions.isDebugSocketEnabled())
                 LOG.debug("A flag 'HELLO' foi bloqueada de ser respondida " +
                         "para o endereço: {}.", dummyPacket.getAddress().getHostAddress());

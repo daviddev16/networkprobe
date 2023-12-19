@@ -1,7 +1,9 @@
 package com.networkprobe.core.exception;
 
+import com.networkprobe.core.annotation.miscs.Documented;
 import org.json.JSONObject;
 
+@Documented(done = false)
 public class JsonRuntimeException extends RuntimeException {
 
     public JsonRuntimeException() {}
@@ -22,14 +24,13 @@ public class JsonRuntimeException extends RuntimeException {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public static String wrap(Exception exception, String origin) {
-        return String.format("{@}:%s:%s", origin,
-                new JSONObject()
-                        .put("message", exception.getMessage())
-                .toString());
+    public static String wrapToJson(Exception exception) {
+        return new JSONObject()
+                .put("message", exception.getMessage())
+                .toString();
     }
 
-    public String toJSONMessage(String origin) {
-        return wrap(this, origin);
+    public String toJSONMessage() {
+        return wrapToJson(this);
     }
 }

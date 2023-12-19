@@ -1,5 +1,6 @@
 package com.networkprobe.core.util;
 
+import com.networkprobe.core.annotation.miscs.Documented;
 import com.networkprobe.core.exception.InvalidPropertyException;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,6 +9,7 @@ import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
+@Documented(done = false)
 public class Validator {
 
     public static final String IPV4_REGEX_PATTERN =
@@ -72,6 +74,12 @@ public class Validator {
     public static <E> E nonNull(E object, String name) {
         if (object == null)
             throw new NullPointerException( format("O campo \"%s\" não pode ser nulo.", name) );
+        return object;
+    }
+
+    public static <E> E nonNullWithMessage(E object, String message) {
+        if (object == null)
+            throw new NullPointerException( message );
         return object;
     }
 

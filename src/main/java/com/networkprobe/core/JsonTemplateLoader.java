@@ -1,9 +1,15 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.Singleton;
-import com.networkprobe.core.model.*;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.Singleton;
+import com.networkprobe.core.domain.CidrNotation;
+import com.networkprobe.core.domain.Command;
+import com.networkprobe.core.domain.Networking;
+import com.networkprobe.core.domain.Route;
 import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.exception.InvalidPropertyException;
+import com.networkprobe.core.util.Key;
+import com.networkprobe.core.util.Utility;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,51 +22,48 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.networkprobe.core.BaseConfigurableTemplate.incoherentPropertyTypeException;
-import static com.networkprobe.core.util.Utility.readFile;
 import static java.lang.String.format;
 
 @Singleton(creationType = SingletonType.LAZY, order = 900)
+@Documented(done = false)
 public class JsonTemplateLoader implements FileTemplateLoader {
 
     public static final Logger LOG = LoggerFactory.getLogger(JsonTemplateLoader.class);
 
+    private JSONObject jsonObject;
+
     @Override
-    public ConfigurationHolder getConfigurator(File file,
-                                               BaseConfigurableTemplate configurableTemplate) throws IOException {
-        return new JsonConfigurationHolder(new JSONObject(readFile(file)), configurableTemplate);
+    public void load(File templateFile, Template template, ResponseEntityFactory responseEntityFactory) {
+        try {
+            jsonObject = new JSONObject(Utility.readFile(templateFile));
+            template.clearTemplateSchema();
+            loadNetworkingSettings(template);
+            loadRouteSettings(template);
+            loadCommandSettings(template, responseEntityFactory);
+        } catch (Exception exception) {
+
+            if (exception instanceof JSONException)
+                LOG.error("Houve um erro na hora de processar o arquivo de configuração Json.");
+
+            else if (exception instanceof IOException || exception instanceof SecurityException)
+                LOG.error("Houve um erro na hora de ler o arquivo de configuração Json.");
+
+            else if (exception instanceof InvalidPropertyException)
+                LOG.error("Foi identificado um parâmetro inválido dentro das configurações.");
+
+            LOG.error("Houve um erro no carregamento do arquivo de template. Verifique: {}", exception.getMessage());
+            ExceptionHandler.handleUnexpected(LOG, exception, Reason.NPS_FILE_LOADER_EXCEPTION);
+
+        }
     }
 
-    @Override
-    public boolean exceptionHandler(Exception exception) {
-
-        if (exception instanceof JSONException)
-            LOG.error("Houve um erro na hora de processar o arquivo de configuração Json.");
-
-        else if (exception instanceof IOException || exception instanceof SecurityException)
-            LOG.error("Houve um erro na hora de ler o arquivo de configuração Json.");
-
-        else if (exception instanceof InvalidPropertyException)
-            LOG.error("Foi identificado um parâmetro inválido dentro das configurações.");
-
-        LOG.error("Houve um erro no carregamento do arquivo de template. Verifique: {}", exception.getMessage());
-
-        return true;
-    }
-
-    @Override
-    public void loadRouteSettings(ConfigurationHolder configurationHolder)
-            throws JSONException, InvalidPropertyException {
-
-        JSONObject jsonObject = ((JsonConfigurationHolder)configurationHolder).getJSONObject();
+    private void loadRouteSettings(Template template) throws JSONException, InvalidPropertyException {
 
         JSONArray routesJsonArray = jsonObject.getJSONArray(Key.ROUTES);
 
         /* adiciona as rotas padrões no mapa de rotas */
-        configurationHolder.getConfigurableTemplate()
-                .getRoutes().put("any", Route.ANY);
-
-        configurationHolder.getConfigurableTemplate()
-                .getRoutes().put("none", Route.NONE);
+        template.getRoutes().put("any", Route.ANY);
+        template.getRoutes().put("none", Route.NONE);
 
         for (Object routeObject : routesJsonArray) {
 
@@ -71,41 +74,36 @@ public class JsonTemplateLoader implements FileTemplateLoader {
             JSONObject routeJsonObject = (JSONObject) routeObject;
             String name = routeJsonObject.getString(Key.NAME);
 
-            configurationHolder.getConfigurableTemplate()
-                    .getRoutes().put(name,
-                            new Route.Builder()
-                                .cidr(routeJsonObject.getString(Key.CIDR))
-                                .name(name)
-                                .get());
+            Route routeBuilt = new Route.Builder()
+                    .cidr(routeJsonObject.getString(Key.CIDR))
+                    .name(name)
+                    .get();
+
+            template.getRoutes().put(name, routeBuilt);
+
         }
     }
 
-    @Override
-    public void loadNetworkingSettings(ConfigurationHolder configurationHolder) {
-        JSONObject jsonObject = ((JsonConfigurationHolder)configurationHolder).getJSONObject();
+    private void loadNetworkingSettings(Template template) {
         JSONObject jsonNetConfig = jsonObject.getJSONObject(Key.NETWORKING);
-        configurationHolder.getConfigurableTemplate()
-                .configureNetworking(
-                        new Networking.Builder()
-                            .tcpBindAddress(
-                                    jsonNetConfig.getString(Key.TCP_BIND_ADDRESS))
-                            .udpBroadcastAddress(
-                                    jsonNetConfig.getString(Key.UDP_BROADCAST_ADDRESS))
-                            .enableDiscovery(
-                                    jsonNetConfig.getBoolean(Key.ENABLE_DISCOVERY))
-                            .tcpSocketBacklog(
-                                    jsonNetConfig.getInt(Key.TCP_SOCKET_BACKLOG))
-                            .udpRequestThreshold(
-                                    jsonNetConfig.getInt(Key.UDP_REQUEST_THRESHOLD))
-                            .tcpConnectionThreshold(
-                                    jsonNetConfig.getInt(Key.TCP_CONNECTION_THRESHOLD))
-                                .get());
+        template.configureNetworking(
+                new Networking.Builder()
+                        .tcpBindAddress(
+                                jsonNetConfig.getString(Key.TCP_BIND_ADDRESS))
+                        .udpBroadcastAddress(
+                                jsonNetConfig.getString(Key.UDP_BROADCAST_ADDRESS))
+                        .enableDiscovery(
+                                jsonNetConfig.getBoolean(Key.ENABLE_DISCOVERY))
+                        .tcpSocketBacklog(
+                                jsonNetConfig.getInt(Key.TCP_SOCKET_BACKLOG))
+                        .udpRequestThreshold(
+                                jsonNetConfig.getInt(Key.UDP_REQUEST_THRESHOLD))
+                        .tcpConnectionThreshold(
+                                jsonNetConfig.getInt(Key.TCP_CONNECTION_THRESHOLD))
+                        .get());
     }
 
-    @Override
-    public void loadCommandSettings(ConfigurationHolder configurationHolder, ResponseEntityFactory responseEntityFactory) {
-
-        JSONObject jsonObject = ((JsonConfigurationHolder)configurationHolder).getJSONObject();
+    private void loadCommandSettings(Template template, ResponseEntityFactory responseEntityFactory) {
 
         JSONArray commandsJsonArray = jsonObject.getJSONArray(Key.COMMANDS);
 
@@ -142,21 +140,15 @@ public class JsonTemplateLoader implements FileTemplateLoader {
                 }
             }
 
-            for (CidrNotation cidrNotation : getAllValidRoutes(routesJsonArray,
-                    configurationHolder.getConfigurableTemplate()))
-            {
+            for (CidrNotation cidrNotation : getAllValidRoutes(routesJsonArray, template)) {
                 commandBuilder.network(cidrNotation);
             }
 
-            configurationHolder.getConfigurableTemplate()
-                    .getCommands().put(commandName, commandBuilder.get());
+            template.getCommands().put(commandName, commandBuilder.get());
         }
 
-        /* VALIDANDO COMANDOS INTERNOS */
-        for (String internalCommandName : Defaults.COMMANDS) {
-            if (!configurationHolder.getConfigurableTemplate()
-                    .getCommands().containsKey(internalCommandName))
-            {
+        for (String internalCommandName : Command.INTERNAL_COMMANDS) {
+            if (!template.getCommands().containsKey(internalCommandName)) {
                 throw incoherentPropertyTypeException(format("O comando interno " +
                         "'%s' não foi encontrado, tente reinstalar o sistema novamente " +
                         "ou baixar o template padrão.", internalCommandName));
@@ -164,24 +156,15 @@ public class JsonTemplateLoader implements FileTemplateLoader {
         }
     }
 
-    /**
-     * Retorna todas as rotas validas do comando
-     * */
     private List<CidrNotation> getAllValidRoutes(final JSONArray jsonArray, Template template) {
-
         List<CidrNotation> cidrNotations = new ArrayList<>();
-
         for (int i = 0; i < jsonArray.length(); i++) {
-
             Object routeObject = jsonArray.get(i);
-
             if (!(routeObject instanceof String))
                 throw incoherentPropertyTypeException(format("Um String é esperado no objeto de índice %d na " +
                         "propriedade %s.", i, Key.ROUTES));
-
             String routeName = (String) routeObject;
             Route commandRoute = template.getRoutes().get(routeName);
-
             if (commandRoute == null) {
                 LOG.warn("A rota \"{}\" não existe no mapa de rotas, isso pode impedir o " +
                         "acesso desse comando.", routeName);
@@ -195,6 +178,11 @@ public class JsonTemplateLoader implements FileTemplateLoader {
     @Override
     public void onSuccessfully() {
         LOG.info("O template do tipo JSON foi carregado com sucesso.");
+    }
+
+    @Override
+    public String getAdapterName() {
+        return getClass().getSimpleName();
     }
 
 

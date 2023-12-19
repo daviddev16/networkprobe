@@ -1,5 +1,6 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.miscs.Documented;
 import com.networkprobe.core.exception.ClientRequestException;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -8,6 +9,7 @@ import java.util.List;
 
 import static com.networkprobe.core.util.Utility.convertJsonArrayToList;
 
+@Documented(done = false)
 public class CommandRequest {
 
     public static final String KEY_CMD = "cmd";

@@ -1,7 +1,7 @@
 package com.networkprobe.core.util;
 
-import com.networkprobe.core.model.CidrNotation;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.domain.CidrNotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
@@ -17,11 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
 
 import static com.networkprobe.core.util.Validator.*;
 
+@Documented(done = false)
 public class Utility {
 
     public static final int MIN_BUFFER_SIZE = 2;
@@ -34,11 +34,6 @@ public class Utility {
             }
         } catch (Exception ignored) {
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    public static Map<String, Object> mapOf(Map<String, Object> parent, String keyOfMap) {
-        return (Map<String, Object>) parent.get(keyOfMap);
     }
 
     public static boolean asBoolean(Object object, String fieldName) {

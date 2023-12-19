@@ -1,16 +1,20 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.caching.*;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.entity.caching.CachedResponseEntity;
+import com.networkprobe.core.entity.caching.ProcessedResponseEntity;
+import com.networkprobe.core.domain.Command;
 import com.networkprobe.core.entity.base.ResponseEntity;
-import com.networkprobe.core.entity.base.StaticResponseEntity;
+import com.networkprobe.core.entity.base.StaticTextResponseEntity;
 
 /**
  * ResponseEntityFactory será utilizado para definir qual será a implementação
  * do ResponseEntity de acordo com o conteúdo do campo 'response' de um comando.
  *
- * @see com.networkprobe.core.model.Command
+ * @see Command
  *
  * */
+@Documented
 public interface ResponseEntityFactory {
 
     /**
@@ -23,7 +27,7 @@ public interface ResponseEntityFactory {
      *
      * @see CachedResponseEntity
      * @see ProcessedResponseEntity
-     * @see StaticResponseEntity
+     * @see StaticTextResponseEntity
      *
      * */
     ResponseEntity<?> responseEntityOf(String rawContent, boolean cachedOnce);

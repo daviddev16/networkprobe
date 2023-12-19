@@ -1,7 +1,8 @@
 package com.networkprobe;
 
-import com.networkprobe.core.*;
-
+import com.networkprobe.core.NetworkProbeOptions;
+import com.networkprobe.core.NetworkServicesFacade;
+import com.networkprobe.core.SingletonDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +16,7 @@ public class Launcher {
         Thread.currentThread().setName("network-probe-main");
 
         if (NetworkProbeOptions.STAGING)
-        {
             args = new String[]{"--debug-sockets", "--template", "./template.yml"};
-        }
 
         LOG.info("\n\n _______          __                       __     __________             ___.           \n" +
                 " \\      \\   _____/  |___  _  _____________|  | __ \\______   \\______  ____\\_ |__   ____  \n" +

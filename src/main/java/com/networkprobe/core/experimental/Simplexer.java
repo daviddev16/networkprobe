@@ -1,6 +1,7 @@
 package com.networkprobe.core.experimental;
 
-import com.networkprobe.core.annotation.Obsolete;
+import com.networkprobe.core.annotation.miscs.Feature;
+import com.networkprobe.core.annotation.miscs.Obsolete;
 import com.networkprobe.core.util.Validator;
 
 import java.util.ArrayList;
@@ -8,7 +9,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-import static com.networkprobe.core.util.Validator.*;
+import static com.networkprobe.core.util.Validator.checkIsNullOrEmpty;
+import static com.networkprobe.core.util.Validator.nonNull;
 
 /**
  *  TEMPORÁRIO: Simplexer transforma funções detectadas no
@@ -16,7 +18,8 @@ import static com.networkprobe.core.util.Validator.*;
  *  Simplexer foi desenvolvido por mim há um tempo atrás
  *  apenas para testes.
  *  */
-@Obsolete(reason = "Será substituido pela arquitetura de Json Procedures.")
+@Obsolete(reason = "Será substituido pela arquitetura de Json Functions.")
+@Feature(notImplemented = false)
 public class Simplexer {
 
     public static final char CHR_DOLLAR = '$';
@@ -103,9 +106,8 @@ public class Simplexer {
 
     public static String overlap(String original, FunctionToken token, String desired) {
         checkIsNullOrEmpty(original, "original");
-        checkIsNotNull(token, "token");
         checkIsNullOrEmpty(desired, "desired");
-        return original.replace(token.toRawValue(), desired);
+        return original.replace(nonNull(token, "token").toRawValue(), desired);
     }
 
     public static boolean containsExpression(String content) {

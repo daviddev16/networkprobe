@@ -1,59 +1,69 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.util.Utility;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.statistics.ClientMetrics;
+import com.networkprobe.core.util.Debugging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.networkprobe.core.util.Utility.*;
+import static com.networkprobe.core.util.Utility.closeQuietly;
 
+@Documented(done = false)
 public class ClientHandler extends ExecutionWorker {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClientHandler.class);
-    private static final Set<Integer> connectedClients = new HashSet<>();
     private static final AtomicInteger ID = new AtomicInteger(-1);
+
     private static final SocketDataMessageProcessor messageProcessor;
+
     static
     {
         messageProcessor = (SocketDataMessageProcessor)
                 SingletonDirectory.getBasedDependency(SocketDataMessageProcessor.class);
     }
 
-    private final Socket clientSocket;
+    private final ClientMetrics clientMetrics;
+    private Socket clientSocket;
+    private PrintWriter outputWriter;
+    private Scanner inputScanner;
 
-    private ClientHandler(Socket clientSocket) {
+    private ClientHandler(Socket clientSocket, ClientMetrics clientMetrics) {
         super("client-worker" + ID.incrementAndGet(), false, false);
+        this.clientMetrics = clientMetrics;
         this.clientSocket = clientSocket;
+        try {
+            outputWriter = new PrintWriter(this.clientSocket.getOutputStream(), true);
+            inputScanner = new Scanner(this.clientSocket.getInputStream());
+        } catch (Exception exception)
+        {
+            ExceptionHandler.handleUnexpected(LOG, exception, Reason.TCP_SOCKET_BEGIN);
+            shutdownClientHandler();
+        }
     }
 
     @Override
     public void onBegin() {
-        PrintWriter outputWriter = null;
-        Scanner inputScanner = null;
         try {
-            register(clientSocket);
-            outputWriter = new PrintWriter(clientSocket.getOutputStream(), true);
-            inputScanner = new Scanner(clientSocket.getInputStream());
-            while (inputScanner.hasNextLine()) {
-                String clientSentValue = inputScanner.nextLine();
+            while (inputScanner.hasNextLine())
+            {
+                String receivedContent = inputScanner.nextLine();
                 long start = System.currentTimeMillis();
-                String response = messageProcessor.processSocketMessage(clientSentValue, clientSocket);
-                System.out.println("Processed message took " + (System.currentTimeMillis() - start) + " ms");
-                outputWriter.println(response);
+                String processedResponse = messageProcessor.processSocketMessage(receivedContent, clientSocket, this);
+                Debugging.log(LOG, String.format("SOCKET: Message processor levou %dms para processar a " +
+                        "requisição.", (System.currentTimeMillis() - start)));
+                outputWriter.println(processedResponse);
+                outputWriter.write(-1);
                 outputWriter.flush();
             }
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             ExceptionHandler.handleUnexpected(LOG, exception, Reason.TCP_CLIENT_HANDLER_PROCESS);
         } finally {
             closeQuietly(clientSocket, outputWriter, inputScanner);
-            unregister(clientSocket);
         }
     }
 
@@ -61,35 +71,23 @@ public class ClientHandler extends ExecutionWorker {
     protected void onUpdate() {
         /* o processamento dos comandos deve ser feito no onBegin, caso chegue
         no onUpdate a conexão deve ser forçada a ser encerrada */
-        if (!clientSocket.isClosed()) {
-                Utility.closeQuietly(clientSocket);
-                unregister(clientSocket);
-                stop();
-        }
+        if (clientSocket.isConnected())
+            shutdownClientHandler();
     }
 
-    public static void delegateHandlerTo(Socket clientSocket) {
-
-        if (!isAlreadyConnected(clientSocket)) {
-            ClientHandler clientHandler = new ClientHandler(clientSocket);
-            clientHandler.start();
-
-        } else if (NetworkProbeOptions.isDebugSocketEnabled())
-            LOG.debug("{} já está conectado em outra porta remota.", clientSocket
-                    .getInetAddress().getHostAddress());
-
+    public static void delegateHandlerTo(final Socket clientSocket,
+                                         final ClientMetrics clientMetrics)
+    {
+        new ClientHandler(clientSocket, clientMetrics).start();
     }
 
-    private static void register(Socket clientSocket) {
-        connectedClients.add(convertSocketAddressToInterger(clientSocket));
+    private void shutdownClientHandler() {
+        closeQuietly(this.clientSocket, outputWriter, inputScanner);
+        stop();
     }
 
-    private static void unregister(Socket clientSocket) {
-        connectedClients.remove(convertSocketAddressToInterger(clientSocket));
-    }
-
-    private static boolean isAlreadyConnected(Socket clientSocket) {
-        return connectedClients.contains(convertSocketAddressToInterger(clientSocket)) && false;
+    public ClientMetrics getClientMetrics() {
+        return clientMetrics;
     }
 
 }

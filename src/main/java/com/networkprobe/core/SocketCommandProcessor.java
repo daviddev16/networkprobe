@@ -1,61 +1,62 @@
 package com.networkprobe.core;
 
-import com.networkprobe.core.annotation.ManagedDependency;
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.Handled;
+import com.networkprobe.core.annotation.reflections.Singleton;
+import com.networkprobe.core.domain.CidrNotation;
+import com.networkprobe.core.domain.Command;
 import com.networkprobe.core.entity.base.ResponseEntity;
-import com.networkprobe.core.model.CidrNotation;
-import com.networkprobe.core.model.Command;
-import com.networkprobe.core.exception.ApplicationOrigin;
 import com.networkprobe.core.exception.ClientRequestException;
+import com.networkprobe.core.util.Debugging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.Socket;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * SocketCommandProcessor é responsável por processar a informação recebida no Socket TCP e determinar
  * se o cliente pode requisitar o comando solicitado através do identificador de rede.
  * */
 @Singleton(creationType = SingletonType.DYNAMIC)
+@Documented(done = false)
 public class SocketCommandProcessor implements SocketDataMessageProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SocketCommandProcessor.class);
 
-    @ManagedDependency
+    @Handled
     private Template template;
 
     @Override
-    public String processSocketMessage(String clientSentValue, final Socket socket) {
-
+    public String processSocketMessage(String receivedMessage, Socket connectedSocket, ClientHandler clientHandler) {
         try {
-
-            CommandRequest commandRequest = new CommandRequest(clientSentValue);
+            CommandRequest commandRequest = new CommandRequest(receivedMessage);
             Command requestedCommand = template.fromRequest(commandRequest);
 
-            if (requestedCommand == null)
+            if (requestedCommand == null) {
                 return template.unknownResponse();
+            }
 
             ResponseEntity<?> responseEntity = requestedCommand.getResponse();
+            clientHandler.getClientMetrics().pushCommandToClientCommandHistory(commandRequest.command());
 
-            if (isClientNetAllowed(socket, requestedCommand.getRoutes())) {
-                if (NetworkProbeOptions.isDebugSocketEnabled())
-                    LOG.debug("SOCKET: \"{}\" requisitou \"{}\" e foi aceito / respondido.",
-                            socket.getInetAddress().getHostAddress(), clientSentValue);
-
-                return Template.parameterized(responseEntity, commandRequest.arguments());
+            if (!isClientNetAllowed(connectedSocket, requestedCommand.getRoutes()))
+            {
+                Debugging.log(LOG, "\"{}\" requisitou \"{}\" e foi negado pelo bloqueio de rotas.",
+                        connectedSocket.getInetAddress().getHostAddress(), receivedMessage);
+                return template.unauthorizedResponse();
             }
-            if (NetworkProbeOptions.isDebugSocketEnabled())
-                LOG.debug("\"{}\" requisitou \"{}\" e foi negado pelo bloqueio de rotas.",
-                        socket.getInetAddress().getHostAddress(), clientSentValue);
 
+            Debugging.log(LOG, "SOCKET: \"{}\" requisitou \"{}\" e foi aceito / respondido.",
+                    connectedSocket.getInetAddress().getHostAddress(), receivedMessage);
+
+            return Template.parameterized(responseEntity, commandRequest.arguments());
+
+        } catch (ClientRequestException requestException) {
+            return requestException.toJSONMessage();
         }
 
-        catch (ClientRequestException requestException) {
-            return requestException.toJSONMessage(ApplicationOrigin.NPS);
-        }
-
-        return template.unauthorizedResponse();
     }
 
     private boolean isClientNetAllowed(Socket clientSocket, Set<CidrNotation> allowedNetworks) {
@@ -79,4 +80,6 @@ public class SocketCommandProcessor implements SocketDataMessageProcessor {
         }
         return networkId;
     }
+
+
 }

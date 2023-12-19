@@ -1,25 +1,29 @@
 package com.networkprobe.core;
 
 
-import com.networkprobe.core.annotation.CommandEntity;
-import com.networkprobe.core.annotation.ManagedDependency;
-import com.networkprobe.core.annotation.Singleton;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.reflections.ClassInventory;
+import com.networkprobe.core.annotation.reflections.CommandEntity;
+import com.networkprobe.core.annotation.reflections.Handled;
+import com.networkprobe.core.annotation.reflections.Singleton;
+import com.networkprobe.core.configurator.Configurable;
+import com.networkprobe.core.domain.CidrNotation;
+import com.networkprobe.core.domain.Command;
 import com.networkprobe.core.entity.base.ResponseEntity;
 import com.networkprobe.core.exception.DependencyException;
 import com.networkprobe.core.exception.SingletonException;
-import com.networkprobe.core.model.CidrNotation;
-import com.networkprobe.core.model.Command;
 import org.jetbrains.annotations.Nullable;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.InstanceAlreadyExistsException;
 import java.io.InvalidClassException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import static com.networkprobe.core.util.Validator.*;
+import static com.networkprobe.core.util.Validator.nonNull;
 
 /**
  *
@@ -28,11 +32,13 @@ import static com.networkprobe.core.util.Validator.*;
  * através do construtor usando a keyword '{@code new ...()}'.
  *
  * Atualmente o SingletonDirectory faz mais do que classificar classes como Singleton. A classe gerência instâncias
- * não-singleton e injeção de dependências através de reflexões.
+ * não-singleton e injeção de dependências através de reflexões, configurações de interfaces e gerenciamento do
+ * {@link ClassMapperHandler} através da anotação {@link @ClassInventory}
  *
- * @see SingletonType
+ *  @see SingletonType
  *
  */
+@Documented(done = false)
 public final class SingletonDirectory {
 
     private static final String BASE_SCAN_PACKAGE = "com.networkprobe";
@@ -66,15 +72,17 @@ public final class SingletonDirectory {
             {
                 LOG.warn("Não é possível utilizar instância dinâmica em uma classe do tipo singleton " +
                         "'INSTANTIATED'. {} será ignorada.", dynamicSigletonClass.getSimpleName());
-                return;
+                continue;
             }
 
             registerDynamicInstance(dynamicSigletonClass, singleton.creationType());
         }
+
         for (SingletonClassInfo singletonClassInfo : singletonInfoMap.values())
         {
             if (singletonClassInfo.getSingletonType() == SingletonType.DYNAMIC)
                 internalInstanceInitialization(singletonClassInfo.getInstance());
+
         }
 
         System.out.println();
@@ -121,8 +129,25 @@ public final class SingletonDirectory {
         {
             Object dynamicObjectInstance = (instantiationObject != null) ? instantiationObject : newDynamicInstanceInternal(objectClass);
             addToInfoMap(objectClass, new SingletonClassInfo(objectClass, dynamicObjectInstance, singletonType));
+            whenInstanceIsLoaded(dynamicObjectInstance);
         }
+    }
 
+    private static void whenInstanceIsLoaded(Object managedInstance) {
+        if (managedInstance.getClass().isAnnotationPresent(ClassInventory.class)) {
+            try {
+                ClassMapperHandler.getInstance().extract(managedInstance);
+            } catch (InstanceAlreadyExistsException | IllegalAccessException exception) {
+                ExceptionHandler.handleUnexpected(LOG, exception, Reason.NPS_CLASS_MAPPER_PROCESS);
+            }
+        }
+        if (managedInstance instanceof Configurable) {
+            try {
+                ((Configurable)managedInstance).configure();
+            } catch (Exception exception) {
+                ExceptionHandler.handleUnexpected(LOG, exception, Reason.NPS_CONFIGURATOR_EXCEPTION);
+            }
+        }
     }
 
     public static void registerCustomInstance(Object instantiationObject)
@@ -144,7 +169,7 @@ public final class SingletonDirectory {
             for (Field dependencyField : objectClass.getDeclaredFields()) {
 
                 if (!dependencyField.getDeclaringClass().isAssignableFrom(objectClass) ||
-                        dependencyField.getAnnotation(ManagedDependency.class) == null)
+                        dependencyField.getAnnotation(Handled.class) == null)
                     continue;
 
                 Object classifiedObject = getCompatibleInstanceOf(dependencyField.getType());
@@ -158,6 +183,7 @@ public final class SingletonDirectory {
 
     private static void internalPerformFieldInjection(Object instantiationObject, Field dependencyField,
                                                Object valueObject) throws InvalidClassException, IllegalAccessException {
+
         nonNull(valueObject, "valueObject");
 
         Class<?> valueObjectType = valueObject.getClass();
@@ -175,6 +201,7 @@ public final class SingletonDirectory {
     private static <E> E internalGenericSingleOf(Class<E> objectClass) throws InstantiationException, IllegalAccessException {
 
         SingletonClassInfo classInfo = singletonInfoMap.getOrDefault(objectClass, null);
+
         if (classInfo == null)
             throw new NullPointerException("Não há instância registada do tipo \"" + objectClass.getName() + "\".");
 
@@ -201,7 +228,7 @@ public final class SingletonDirectory {
     public static Object getCompatibleInstanceOf(Class<?> objectClass){
         try {
             SingletonClassInfo classInfo = singletonInfoMap.values()
-                    .parallelStream()
+                    .stream()
                     .filter(singletonClassInfo -> objectClass
                             .isAssignableFrom(singletonClassInfo.getObjectClass()))
                     .findAny()
@@ -268,6 +295,7 @@ public final class SingletonDirectory {
         {
             objectInstance = newDynamicInstanceInternal(classInfo.getObjectClass());
             internalInstanceInitialization(objectInstance);
+            whenInstanceIsLoaded(objectInstance);
         }
 
         return (T) objectInstance;

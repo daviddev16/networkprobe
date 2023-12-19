@@ -1,33 +1,34 @@
 package com.networkprobe.core.configurator;
 
 import com.networkprobe.core.*;
-import com.networkprobe.core.annotation.Singleton;
-import org.slf4j.LoggerFactory;
+import com.networkprobe.core.annotation.miscs.Documented;
+import com.networkprobe.core.annotation.miscs.Replaced;
+import com.networkprobe.core.annotation.reflections.Singleton;
+import com.networkprobe.core.configurator.Configurable;
 
-import javax.management.InstanceAlreadyExistsException;
-import java.io.File;
+@Documented
+@Replaced(
+        newer = SingletonDirectory.class,
+        since = "1.7-SNAPSHOT",
+        reference = {
+                "InventoryConfigurator não será mais usado para extrair as funções de UsableNetworkDataInventory.",
+                "A partir da versão 1.8, a inicialização de Data Inventories é feita pelo SingletonDirectory, através",
+                "De instânciação de objetos e injeção de dependências."})
 
-/*
-* Configurator's
-* Configuradores serão usados para configurar trechos de códigos dinâmicamente, sem poluir o Launcher
-* */
-@Singleton(creationType = SingletonType.DYNAMIC, order = 2000)
-public class InventoryConfigurator {
+@Singleton(creationType = SingletonType.DYNAMIC, order = 300, enabled = false)
+public class InventoryConfigurator implements Configurable {
 
     public InventoryConfigurator() {
-        try {
-            configure();
-        } catch (InstanceAlreadyExistsException | IllegalAccessException e) {
-            ExceptionHandler.handleUnexpected(LoggerFactory
-                    .getLogger(InventoryConfigurator.class), e,
-                    Reason.NPS_CONFIGURATOR_EXCEPTION);
-        }
+        SingletonDirectory.denyInstantiation(this);
     }
 
-    private void configure()
-            throws InstanceAlreadyExistsException, IllegalAccessException
-    {
-        ClassMapperHandler.getInstance().extract(UsableNetworkDataInventory.getInventory());
+    /**
+     * Utiliza o {@link ClassMapperHandler} para mapear/extrair as funções da classe: {@link UsableNetworkDataInventory}
+     * @throws Exception Caso ocorra algum erro na extração das funções da classe informada.
+     * */
+    public void configure() throws Exception {
+       ClassMapperHandler.getInstance()
+               .extract(UsableNetworkDataInventory.getInventory());
     }
 
 }

@@ -1,11 +1,16 @@
 package com.networkprobe.core;
 
+import com.networkprobe.core.annotation.miscs.Documented;
+
 import java.io.File;
-import java.io.IOException;
 
-public interface FileTemplateLoader extends BaseTemplateLoader {
+@Documented(done = false)
+public interface FileTemplateLoader {
 
-    ConfigurationHolder getConfigurator(File file,
-                                        BaseConfigurableTemplate configurableTemplate)  throws IOException;
+    void onSuccessfully();
+
+    String getAdapterName();
+
+    void load(File templateFile, Template template, ResponseEntityFactory responseEntityFactory);
 
 }
